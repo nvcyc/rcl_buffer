@@ -75,12 +75,56 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 
-  # Launch test for demo backend (only if demo_buffer_backend is available)
+  # Launch tests for buffer backend (only if demo_buffer_backend is available)
   if(demo_buffer_backend_FOUND)
     find_package(launch_testing_ament_cmake REQUIRED)
+
+    # Original demo backend test
     add_launch_test(test/test_demo_backend_image_pubsub_launch.py
       TARGET test_demo_backend_image_pubsub_launch
       TIMEOUT 60
+    )
+
+    # 1 publisher to 1 subscriber tests
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu.py
+      TARGET test_1pub_1sub_cpu_to_cpu
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_demo.py
+      TARGET test_1pub_1sub_demo_to_demo
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu.py
+      TARGET test_1pub_1sub_demo_to_cpu
+      TIMEOUT 30
+    )
+
+    # 1 publisher to 2 subscribers tests
+    add_launch_test(test/test_1pub_2sub_cpu_to_cpu.py
+      TARGET test_1pub_2sub_cpu_to_cpu
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_2sub_demo_to_demo.py
+      TARGET test_1pub_2sub_demo_to_demo
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_2sub_demo_to_cpu.py
+      TARGET test_1pub_2sub_demo_to_cpu
+      TIMEOUT 30
+    )
+
+    # 2 publishers to 2 subscribers each tests
+    add_launch_test(test/test_2pub_2sub_cpu_to_cpu.py
+      TARGET test_2pub_2sub_cpu_to_cpu
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_2pub_2sub_demo_to_demo.py
+      TARGET test_2pub_2sub_demo_to_demo
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_2pub_2sub_demo_to_cpu.py
+      TARGET test_2pub_2sub_demo_to_cpu
+      TIMEOUT 45
     )
   endif()
 endif()

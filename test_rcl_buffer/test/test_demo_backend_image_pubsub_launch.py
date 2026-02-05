@@ -32,7 +32,9 @@ def generate_test_description():
         executable='demo_backend_image_publisher_node',
         name='demo_backend_image_publisher',
         output='screen',
-        parameters=[],
+        parameters=[{
+            'max_publish_count': 5,
+        }],
     )
 
     # Subscriber node

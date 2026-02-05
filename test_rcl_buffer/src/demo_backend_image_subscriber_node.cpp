@@ -1,8 +1,11 @@
 // Copyright 2024 NVIDIA Corporation
 //
 // Demo backend image subscriber node for demonstrating buffer backend plugin system
+// Supports configurable topic and expected backend type via parameters
 
 #include <memory>
+#include <sstream>
+#include <string>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -19,18 +22,67 @@ public:
     received_count_(0),
     validation_passed_(true)
   {
+    // Declare parameters
+    this->declare_parameter<std::string>("topic_name", "demo_backend_image");
+    this->declare_parameter<std::string>("expected_backends", "demo,cpu");
+    this->declare_parameter<std::string>("count_topic_suffix", "");
+    this->declare_parameter<std::string>("count_topic_prefix", "");
+
+    // Get parameters
+    std::string topic_name = this->get_parameter("topic_name").as_string();
+    expected_backends_str_ = this->get_parameter("expected_backends").as_string();
+    std::string count_suffix = this->get_parameter("count_topic_suffix").as_string();
+    std::string count_prefix = this->get_parameter("count_topic_prefix").as_string();
+
+    // Parse expected backends
+    parse_expected_backends(expected_backends_str_);
+
     subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
-      "demo_backend_image", 10,
+      topic_name, 10,
       std::bind(&DemoBackendImageSubscriber::image_callback, this, std::placeholders::_1));
 
-    // Publishers for test results
-    count_publisher_ = this->create_publisher<std_msgs::msg::UInt32>("subscriber_count", 10);
-    validation_publisher_ = this->create_publisher<std_msgs::msg::Bool>("validation_result", 10);
+    // Publishers for test results (with optional prefix and suffix for multiple test configurations)
+    std::string count_topic = count_prefix.empty() ? "subscriber_count" :
+                              count_prefix + "_subscriber_count";
+    count_topic += count_suffix;
+    std::string validation_topic = count_prefix.empty() ? "validation_result" :
+                                   count_prefix + "_validation_result";
+    validation_topic += count_suffix;
 
-    RCLCPP_INFO(this->get_logger(), "Demo backend image subscriber started");
+    count_publisher_ = this->create_publisher<std_msgs::msg::UInt32>(count_topic, 10);
+    validation_publisher_ = this->create_publisher<std_msgs::msg::Bool>(validation_topic, 10);
+
+    RCLCPP_INFO(this->get_logger(),
+      "Demo backend image subscriber started (topic: %s, expected_backends: %s)",
+      topic_name.c_str(), expected_backends_str_.c_str());
   }
 
 private:
+  void parse_expected_backends(const std::string & backends_str)
+  {
+    expected_backends_.clear();
+    std::string token;
+    std::istringstream tokenStream(backends_str);
+    while (std::getline(tokenStream, token, ',')) {
+      // Trim whitespace
+      size_t start = token.find_first_not_of(" \t");
+      size_t end = token.find_last_not_of(" \t");
+      if (start != std::string::npos && end != std::string::npos) {
+        expected_backends_.push_back(token.substr(start, end - start + 1));
+      }
+    }
+  }
+
+  bool is_backend_expected(const std::string & backend) const
+  {
+    for (const auto & expected : expected_backends_) {
+      if (expected == backend) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
   {
     received_count_++;
@@ -63,13 +115,13 @@ private:
       msg_valid = false;
     }
 
-    // Check backend type - accept "demo" or "cpu" (CPU is valid fallback for inter-process)
+    // Check backend type against expected backends
     const std::string backend_type = msg->data.get_backend_type();
-    if (backend_type != "demo" && backend_type != "cpu") {
+    if (!is_backend_expected(backend_type)) {
       RCLCPP_ERROR(
         this->get_logger(),
-        "Unexpected backend type: %s (expected: demo or cpu)",
-        backend_type.c_str());
+        "Unexpected backend type: %s (expected one of: %s)",
+        backend_type.c_str(), expected_backends_str_.c_str());
       msg_valid = false;
     }
 
@@ -82,6 +134,10 @@ private:
       RCLCPP_INFO(
         this->get_logger(),
         "Received message using 'cpu' backend - serialization fallback");
+    } else {
+      RCLCPP_INFO(
+        this->get_logger(),
+        "Received message using '%s' backend", backend_type.c_str());
     }
 
     // Validate data integrity
@@ -95,7 +151,6 @@ private:
           cpu_data[0], cpu_data[cpu_data.size() - 1], cpu_data.size());
 
         // Verify data pattern (values should be sequential modulo 256)
-        // Since publisher uses (count + i) % 256, consecutive bytes differ by 1
         bool pattern_valid = true;
         for (size_t i = 1; i < std::min(cpu_data.size(), static_cast<size_t>(10)); ++i) {
           uint8_t expected_diff = 1;
@@ -114,7 +169,6 @@ private:
           RCLCPP_INFO(this->get_logger(), "Data pattern verification: PASSED");
         } else {
           RCLCPP_WARN(this->get_logger(), "Data pattern verification: FAILED");
-          // Don't fail the test for pattern mismatch - data might be from different count
         }
       }
     } catch (const std::exception & e) {
@@ -151,6 +205,8 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_;
   rclcpp::Publisher<std_msgs::msg::UInt32>::SharedPtr count_publisher_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr validation_publisher_;
+  std::string expected_backends_str_;
+  std::vector<std::string> expected_backends_;
   uint32_t received_count_;
   bool validation_passed_;
 };
