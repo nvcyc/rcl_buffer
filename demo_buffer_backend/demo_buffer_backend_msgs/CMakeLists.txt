@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(rcl_buffer_test_backend_msgs)
+project(demo_buffer_backend_msgs)
 
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
@@ -17,7 +17,7 @@ find_package(rosidl_typesupport_fastrtps_cpp REQUIRED)
 
 # Generate interfaces
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/TestBufferDescriptor.msg"
+  "msg/DemoBufferDescriptor.msg"
 )
 
 # Build FastRTPS serialization registration library

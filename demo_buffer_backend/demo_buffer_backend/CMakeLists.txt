@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(rcl_buffer_test_backend)
+project(demo_buffer_backend)
 
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
@@ -15,11 +15,11 @@ find_package(ament_cmake REQUIRED)
 find_package(rosidl_runtime_cpp REQUIRED)
 find_package(rosidl_buffer_registry REQUIRED)
 find_package(pluginlib REQUIRED)
-find_package(rcl_buffer_test_backend_msgs REQUIRED)
+find_package(demo_buffer_backend_msgs REQUIRED)
 
-# Build the test backend plugin library
+# Build the demo backend plugin library
 add_library(${PROJECT_NAME} SHARED
-  src/test_buffer_backend_plugin.cpp
+  src/demo_buffer_backend_plugin.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -31,7 +31,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 # Force the linker to keep the library even without explicit symbol references
 target_link_libraries(${PROJECT_NAME}
   -Wl,--no-as-needed
-  rcl_buffer_test_backend_msgs::rcl_buffer_test_backend_msgs_fastrtps_registration
+  demo_buffer_backend_msgs::demo_buffer_backend_msgs_fastrtps_registration
   -Wl,--as-needed
 )
 
@@ -39,7 +39,7 @@ ament_target_dependencies(${PROJECT_NAME}
   rosidl_runtime_cpp
   rosidl_buffer_registry
   pluginlib
-  rcl_buffer_test_backend_msgs
+  demo_buffer_backend_msgs
 )
 
 # Install headers
@@ -59,12 +59,12 @@ install(
 
 # Install plugin descriptor (CRITICAL for pluginlib discovery)
 install(
-  FILES test_buffer_plugin.xml
+  FILES demo_buffer_plugin.xml
   DESTINATION share/${PROJECT_NAME}
 )
 
 # Register plugin with ament index for pluginlib discovery
-pluginlib_export_plugin_description_file(rosidl_buffer_registry test_buffer_plugin.xml)
+pluginlib_export_plugin_description_file(rosidl_buffer_registry demo_buffer_plugin.xml)
 
 # Export dependencies
 ament_export_targets(${PROJECT_NAME})
@@ -72,7 +72,7 @@ ament_export_dependencies(
   rosidl_runtime_cpp
   rosidl_buffer_registry
   pluginlib
-  rcl_buffer_test_backend_msgs
+  demo_buffer_backend_msgs
 )
 ament_export_include_directories(include/${PROJECT_NAME})
 
@@ -83,15 +83,15 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
 
   # Basic backend functionality test
-  ament_add_gtest(test_test_buffer_backend
-    test/test_test_buffer_backend.cpp
+  ament_add_gtest(test_demo_buffer_backend
+    test/test_demo_buffer_backend.cpp
   )
-  if(TARGET test_test_buffer_backend)
-    target_link_libraries(test_test_buffer_backend ${PROJECT_NAME})
-    ament_target_dependencies(test_test_buffer_backend
+  if(TARGET test_demo_buffer_backend)
+    target_link_libraries(test_demo_buffer_backend ${PROJECT_NAME})
+    ament_target_dependencies(test_demo_buffer_backend
       rosidl_runtime_cpp
       rosidl_buffer_registry
-      rcl_buffer_test_backend_msgs
+      demo_buffer_backend_msgs
     )
   endif()
 endif()

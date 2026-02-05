@@ -1,6 +1,6 @@
 // Copyright 2024 NVIDIA Corporation
 //
-// Test backend image publisher node for testing buffer backend plugin system
+// Demo backend image publisher node for demonstrating buffer backend plugin system
 
 #include <chrono>
 #include <memory>
@@ -9,24 +9,24 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "std_msgs/msg/u_int32.hpp"
-#include "rcl_buffer_test_backend/test_buffer_impl.hpp"
+#include "demo_buffer_backend/demo_buffer_impl.hpp"
 #include "rosidl_runtime_cpp/buffer.hpp"
 
 using namespace std::chrono_literals;
 
-class TestBackendImagePublisher : public rclcpp::Node
+class DemoBackendImagePublisher : public rclcpp::Node
 {
 public:
-  TestBackendImagePublisher()
-  : Node("test_backend_image_publisher"), count_(0)
+  DemoBackendImagePublisher()
+  : Node("demo_backend_image_publisher"), count_(0)
   {
-    publisher_ = this->create_publisher<sensor_msgs::msg::Image>("test_backend_image", 10);
+    publisher_ = this->create_publisher<sensor_msgs::msg::Image>("demo_backend_image", 10);
     count_publisher_ = this->create_publisher<std_msgs::msg::UInt32>("publisher_count", 10);
 
     timer_ = this->create_wall_timer(
-      500ms, std::bind(&TestBackendImagePublisher::timer_callback, this));
+      500ms, std::bind(&DemoBackendImagePublisher::timer_callback, this));
 
-    RCLCPP_INFO(this->get_logger(), "Test backend image publisher started");
+    RCLCPP_INFO(this->get_logger(), "Demo backend image publisher started");
   }
 
 private:
@@ -34,16 +34,16 @@ private:
   {
     auto msg = sensor_msgs::msg::Image();
 
-    // Create test image: 8x8 RGB
+    // Create demo image: 8x8 RGB
     msg.header.stamp = this->now();
-    msg.header.frame_id = "test_backend_frame";
+    msg.header.frame_id = "demo_backend_frame";
     msg.height = 8;
     msg.width = 8;
     msg.encoding = "rgb8";
     msg.step = 8 * 3;
     msg.is_bigendian = 0;
 
-    // Create TestBufferImpl for image data
+    // Create DemoBufferImpl for image data
     const size_t data_size = 8 * 8 * 3;
 
     // Fill with pattern based on count
@@ -52,16 +52,16 @@ private:
       host_data[i] = static_cast<uint8_t>((count_ + i) % 256);
     }
 
-    // Create TestBufferImpl with the data
-    auto test_impl = std::make_unique<rcl_buffer_test_backend::TestBufferImpl<uint8_t>>(
+    // Create DemoBufferImpl with the data
+    auto demo_impl = std::make_unique<demo_buffer_backend::DemoBufferImpl<uint8_t>>(
       std::move(host_data));
 
-    // Set test backend implementation on msg.data
-    msg.data.set_impl(std::move(test_impl), "test");
+    // Set demo backend implementation on msg.data
+    msg.data.set_impl(std::move(demo_impl), "demo");
 
     RCLCPP_INFO(
       this->get_logger(),
-      "Publishing image #%zu with test backend (size: %zu, backend: %s)",
+      "Publishing image #%zu with demo backend (size: %zu, backend: %s)",
       count_ + 1, msg.data.size(), msg.data.get_backend_type().c_str());
 
     publisher_->publish(msg);
@@ -81,7 +81,7 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<TestBackendImagePublisher>();
+  auto node = std::make_shared<DemoBackendImagePublisher>();
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;

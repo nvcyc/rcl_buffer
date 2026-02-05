@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RCL_BUFFER_TEST_BACKEND__TEST_BUFFER_BACKEND_HPP_
-#define RCL_BUFFER_TEST_BACKEND__TEST_BUFFER_BACKEND_HPP_
+#ifndef DEMO_BUFFER_BACKEND__DEMO_BUFFER_BACKEND_HPP_
+#define DEMO_BUFFER_BACKEND__DEMO_BUFFER_BACKEND_HPP_
 
 #include <cstring>
 #include <memory>
@@ -22,30 +22,30 @@
 #include <vector>
 
 #include "rosidl_buffer_registry/buffer_backend.hpp"
-#include "rcl_buffer_test_backend/test_buffer_impl.hpp"
+#include "demo_buffer_backend/demo_buffer_impl.hpp"
 
-namespace rcl_buffer_test_backend
+namespace demo_buffer_backend
 {
 
-/// Test buffer backend implementation for testing the buffer backend plugin system.
+/// Demo buffer backend implementation for demonstrating the buffer backend plugin system.
 /// This backend is intentionally simple - it stores data on CPU and serializes by copying.
 /// It includes a hash verification mechanism to ensure data integrity.
-class TestBufferBackend : public rosidl_buffer_registry::BufferBackend
+class DemoBufferBackend : public rosidl_buffer_registry::BufferBackend
 {
 public:
   /// Constructor
-  TestBufferBackend();
-  ~TestBufferBackend() override = default;
+  DemoBufferBackend();
+  ~DemoBufferBackend() override = default;
 
   // ========== BufferBackend interface implementation ==========
 
   /// Get backend type name
   std::string get_backend_type() const override
   {
-    return "test";
+    return "demo";
   }
 
-  /// Get backend aux info (empty for test backend)
+  /// Get backend aux info (empty for demo backend)
   std::string get_backend_aux_info() const override
   {
     return "version=1.0";
@@ -54,7 +54,7 @@ public:
   /// Get descriptor message type name
   std::string get_descriptor_type_name() const override
   {
-    return "rcl_buffer_test_backend_msgs::msg::TestBufferDescriptor";
+    return "demo_buffer_backend_msgs::msg::DemoBufferDescriptor";
   }
 
   /// Create descriptor with endpoint awareness
@@ -81,6 +81,6 @@ public:
   void * get_descriptor_registration_function() const override;
 };
 
-}  // namespace rcl_buffer_test_backend
+}  // namespace demo_buffer_backend
 
-#endif  // RCL_BUFFER_TEST_BACKEND__TEST_BUFFER_BACKEND_HPP_
+#endif  // DEMO_BUFFER_BACKEND__DEMO_BUFFER_BACKEND_HPP_

@@ -1,8 +1,0 @@
-<!-- Plugin descriptor for test buffer backend -->
-<library path="rcl_buffer_test_backend">
-  <class name="test"
-         type="rcl_buffer_test_backend::TestBufferBackend"
-         base_class_type="rosidl_buffer_registry::BufferBackend">
-    <description>Test backend for buffer serialization with hash verification</description>
-  </class>
-</library>

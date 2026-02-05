@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright 2024 NVIDIA Corporation
 #
-# Launch test for Test Backend-based Image pub/sub
+# Launch test for Demo Backend-based Image pub/sub
 
 import os
 import sys
@@ -19,19 +19,18 @@ import pytest
 import rclpy
 from rclpy.node import Node as RclpyNode
 from std_msgs.msg import UInt32, Bool
-from sensor_msgs.msg import Image
 
 
 @pytest.mark.launch_test
 @launch_testing.markers.keep_alive
 def generate_test_description():
-    """Generate launch description for test backend image pub/sub test."""
+    """Generate launch description for demo backend image pub/sub test."""
 
     # Publisher node
     publisher_node = Node(
         package='test_rcl_buffer',
-        executable='test_backend_image_publisher_node',
-        name='test_backend_image_publisher',
+        executable='demo_backend_image_publisher_node',
+        name='demo_backend_image_publisher',
         output='screen',
         parameters=[],
     )
@@ -39,8 +38,8 @@ def generate_test_description():
     # Subscriber node
     subscriber_node = Node(
         package='test_rcl_buffer',
-        executable='test_backend_image_subscriber_node',
-        name='test_backend_image_subscriber',
+        executable='demo_backend_image_subscriber_node',
+        name='demo_backend_image_subscriber',
         output='screen',
         parameters=[],
     )
@@ -53,8 +52,8 @@ def generate_test_description():
     ])
 
 
-class TestBackendImagePubSub(unittest.TestCase):
-    """Test case for Test Backend-based Image pub/sub."""
+class DemoBackendImagePubSub(unittest.TestCase):
+    """Test case for Demo Backend-based Image pub/sub."""
 
     @classmethod
     def setUpClass(cls):
@@ -68,13 +67,12 @@ class TestBackendImagePubSub(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.node = rclpy.create_node('test_test_backend_image_pubsub')
+        self.node = rclpy.create_node('test_demo_backend_image_pubsub')
 
         # Track received messages
         self.publisher_count = 0
         self.subscriber_count = 0
         self.validation_passed = True
-        self.images_received = []
 
         # Create subscriptions to monitor test progress
         self.pub_count_sub = self.node.create_subscription(
@@ -98,13 +96,6 @@ class TestBackendImagePubSub(unittest.TestCase):
             10
         )
 
-        self.image_sub = self.node.create_subscription(
-            Image,
-            'test_backend_image',
-            self._image_callback,
-            10
-        )
-
     def tearDown(self):
         """Clean up test fixtures."""
         self.node.destroy_node()
@@ -121,10 +112,6 @@ class TestBackendImagePubSub(unittest.TestCase):
         """Track validation status."""
         self.validation_passed = msg.data
 
-    def _image_callback(self, msg):
-        """Track received images."""
-        self.images_received.append(msg)
-
     def _spin_until_messages(self, target_count=5, timeout_sec=15.0):
         """Spin until we receive target number of messages or timeout."""
         start_time = time.time()
@@ -135,7 +122,7 @@ class TestBackendImagePubSub(unittest.TestCase):
 
         return self.subscriber_count >= target_count
 
-    def test_01_messages_exchanged(self):
+    def test_backend_messages_delivered(self):
         """Test that messages are successfully exchanged."""
         # Wait for at least 5 messages to be received
         success = self._spin_until_messages(target_count=5, timeout_sec=15.0)
@@ -150,54 +137,13 @@ class TestBackendImagePubSub(unittest.TestCase):
             self.publisher_count, 5,
             f"Publisher should have sent at least 5 messages. Sent: {self.publisher_count}"
         )
-
-    def test_02_validation_passed(self):
-        """Test that message validation passed."""
-        # Ensure messages were received first
-        self._spin_until_messages(target_count=5, timeout_sec=15.0)
-
+        
+        # The C++ subscriber validates image dimensions internally
+        # If validation_result is True, dimensions were correct
         self.assertTrue(
             self.validation_passed,
-            "Message validation failed on subscriber side"
+            "Image validation failed (dimensions checked by C++ subscriber)"
         )
-
-    def test_03_test_backend_used(self):
-        """Test that test backend is used for buffers (or CPU fallback)."""
-        # Ensure messages were received first
-        self._spin_until_messages(target_count=5, timeout_sec=15.0)
-
-        self.assertGreater(
-            len(self.images_received), 0,
-            "No images received to check backend"
-        )
-
-        # The C++ subscriber node validates backend type and publishes validation_result
-        # So we rely on that validation
-        self.assertTrue(
-            self.validation_passed,
-            "Backend validation failed (checked by C++ subscriber)"
-        )
-
-    def test_04_image_dimensions(self):
-        """Test that images have correct dimensions."""
-        # Ensure messages were received first
-        self._spin_until_messages(target_count=5, timeout_sec=15.0)
-
-        self.assertGreater(
-            len(self.images_received), 0,
-            "No images received to check dimensions"
-        )
-
-        for img in self.images_received:
-            self.assertEqual(img.width, 8, "Image width should be 8")
-            self.assertEqual(img.height, 8, "Image height should be 8")
-            self.assertEqual(img.encoding, "rgb8", "Image encoding should be rgb8")
-            self.assertEqual(len(img.data), 8 * 8 * 3, "Image data size should be 192 bytes")
-
-    def test_05_publisher_subscriber_counts_match(self):
-        """Test that publisher and subscriber counts roughly match."""
-        # Wait for messages
-        self._spin_until_messages(target_count=5, timeout_sec=15.0)
 
         # Allow some tolerance for timing
         self.assertLessEqual(
@@ -207,8 +153,9 @@ class TestBackendImagePubSub(unittest.TestCase):
         )
 
 
+
 @launch_testing.post_shutdown_test()
-class TestBackendImagePubSubShutdown(unittest.TestCase):
+class DemoBackendImagePubSubShutdown(unittest.TestCase):
     """Test proper shutdown of nodes."""
 
     def test_exit_codes(self, proc_info):

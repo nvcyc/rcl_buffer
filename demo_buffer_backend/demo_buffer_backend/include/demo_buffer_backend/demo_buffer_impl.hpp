@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RCL_BUFFER_TEST_BACKEND__TEST_BUFFER_IMPL_HPP_
-#define RCL_BUFFER_TEST_BACKEND__TEST_BUFFER_IMPL_HPP_
+#ifndef DEMO_BUFFER_BACKEND__DEMO_BUFFER_IMPL_HPP_
+#define DEMO_BUFFER_BACKEND__DEMO_BUFFER_IMPL_HPP_
 
 #include <algorithm>
 #include <cstdint>
@@ -26,10 +26,10 @@
 
 #include "rosidl_runtime_cpp/buffer_impl_base.hpp"
 #include "rosidl_runtime_cpp/cpu_buffer_impl.hpp"
-#include "rcl_buffer_test_backend_msgs/msg/test_buffer_descriptor.hpp"
+#include "demo_buffer_backend_msgs/msg/demo_buffer_descriptor.hpp"
 #include "rmw/types.h"
 
-namespace rcl_buffer_test_backend
+namespace demo_buffer_backend
 {
 
 /// Compute FNV-1a hash of data bytes.
@@ -50,35 +50,35 @@ inline uint64_t compute_fnv1a_hash(const uint8_t * data, size_t size)
   return hash;
 }
 
-/// Test buffer implementation that stores data in a std::vector<uint8_t>.
-/// This is a simple implementation for testing the buffer backend plugin system.
+/// Demo buffer implementation that stores data in a std::vector<uint8_t>.
+/// This is a simple implementation for demonstrating the buffer backend plugin system.
 /// It serializes data by copying and includes a hash for verification.
 template<typename T>
-class TestBufferImpl : public rosidl_runtime_cpp::BufferImplBase<T>
+class DemoBufferImpl : public rosidl_runtime_cpp::BufferImplBase<T>
 {
 public:
-  TestBufferImpl() = default;
+  DemoBufferImpl() = default;
 
-  explicit TestBufferImpl(size_t size)
+  explicit DemoBufferImpl(size_t size)
   {
     storage_.resize(size);
   }
 
   /// Constructor from existing vector (move)
-  explicit TestBufferImpl(std::vector<T> && data)
+  explicit DemoBufferImpl(std::vector<T> && data)
   : storage_(std::move(data)) {}
 
   /// Constructor from existing vector (copy)
-  explicit TestBufferImpl(const std::vector<T> & data)
+  explicit DemoBufferImpl(const std::vector<T> & data)
   : storage_(data) {}
 
-  ~TestBufferImpl() = default;
+  ~DemoBufferImpl() = default;
 
   // Allow copy and move
-  TestBufferImpl(const TestBufferImpl &) = default;
-  TestBufferImpl & operator=(const TestBufferImpl &) = default;
-  TestBufferImpl(TestBufferImpl &&) = default;
-  TestBufferImpl & operator=(TestBufferImpl &&) = default;
+  DemoBufferImpl(const DemoBufferImpl &) = default;
+  DemoBufferImpl & operator=(const DemoBufferImpl &) = default;
+  DemoBufferImpl(DemoBufferImpl &&) = default;
+  DemoBufferImpl & operator=(DemoBufferImpl &&) = default;
 
   /// Get mutable reference to underlying std::vector.
   std::vector<T> & get_storage() {return storage_;}
@@ -107,7 +107,7 @@ public:
 
   std::unique_ptr<rosidl_runtime_cpp::BufferImplBase<T>> to_cpu() const override
   {
-    // TestBufferImpl stores data on CPU, so just copy to CpuBufferImpl
+    // DemoBufferImpl stores data on CPU, so just copy to CpuBufferImpl
     auto cpu = std::make_unique<rosidl_runtime_cpp::CpuBufferImpl<T>>();
     cpu->get_storage() = storage_;
     return cpu;
@@ -117,17 +117,17 @@ public:
 
   std::string get_descriptor_type_name() const override
   {
-    return "rcl_buffer_test_backend_msgs/msg/TestBufferDescriptor";
+    return "demo_buffer_backend_msgs/msg/DemoBufferDescriptor";
   }
 
   std::shared_ptr<void> create_descriptor(const rmw_gid_t & subscriber_gid) const override
   {
-    (void)subscriber_gid;  // Not used for test backend
+    (void)subscriber_gid;  // Not used for demo backend
 
-    std::cerr << "[TestBufferImpl] create_descriptor() called, size=" << storage_.size()
+    std::cerr << "[DemoBufferImpl] create_descriptor() called, size=" << storage_.size()
               << " elements\n";
 
-    auto descriptor = std::make_shared<rcl_buffer_test_backend_msgs::msg::TestBufferDescriptor>();
+    auto descriptor = std::make_shared<demo_buffer_backend_msgs::msg::DemoBufferDescriptor>();
 
     descriptor->size = storage_.size();
     descriptor->element_type_name = typeid(T).name();
@@ -146,7 +146,7 @@ public:
       reinterpret_cast<const uint8_t *>(storage_.data()),
       storage_.size() * sizeof(T));
 
-    std::cerr << "[TestBufferImpl] Descriptor created: size=" << descriptor->size
+    std::cerr << "[DemoBufferImpl] Descriptor created: size=" << descriptor->size
               << ", data_hash=" << descriptor->data_hash << "\n";
 
     return descriptor;
@@ -156,24 +156,24 @@ public:
     const std::shared_ptr<void> & descriptor_ptr,
     const rmw_gid_t & publisher_gid) const override
   {
-    (void)publisher_gid;  // Not used for test backend
+    (void)publisher_gid;  // Not used for demo backend
 
-    auto descriptor = std::static_pointer_cast<rcl_buffer_test_backend_msgs::msg::TestBufferDescriptor>(
+    auto descriptor = std::static_pointer_cast<demo_buffer_backend_msgs::msg::DemoBufferDescriptor>(
       descriptor_ptr);
 
-    std::cerr << "[TestBufferImpl] from_descriptor() called, size=" << descriptor->size
+    std::cerr << "[DemoBufferImpl] from_descriptor() called, size=" << descriptor->size
               << " elements, data_hash=" << descriptor->data_hash << "\n";
 
     // Validate element type
     if (descriptor->element_type_name != typeid(T).name()) {
       throw std::runtime_error(
-              "TestBufferDescriptor element type mismatch: expected " +
+              "DemoBufferDescriptor element type mismatch: expected " +
               std::string(typeid(T).name()) + ", got " +
               descriptor->element_type_name);
     }
 
     // Create new buffer and copy data
-    auto impl = std::make_unique<TestBufferImpl<T>>(descriptor->size);
+    auto impl = std::make_unique<DemoBufferImpl<T>>(descriptor->size);
 
     if (descriptor->size > 0 && !descriptor->data.empty()) {
       std::memcpy(
@@ -187,12 +187,12 @@ public:
         impl->storage_.size() * sizeof(T));
 
       if (computed_hash != descriptor->data_hash) {
-        std::cerr << "[TestBufferImpl] WARNING: Hash mismatch! Expected "
+        std::cerr << "[DemoBufferImpl] WARNING: Hash mismatch! Expected "
                   << descriptor->data_hash << ", computed " << computed_hash << "\n";
-        throw std::runtime_error("TestBufferDescriptor hash verification failed");
+        throw std::runtime_error("DemoBufferDescriptor hash verification failed");
       }
 
-      std::cerr << "[TestBufferImpl] Hash verified successfully\n";
+      std::cerr << "[DemoBufferImpl] Hash verified successfully\n";
     }
 
     return impl;
@@ -200,7 +200,7 @@ public:
 
   std::unique_ptr<rosidl_runtime_cpp::BufferImplBase<T>> clone() const override
   {
-    auto copy = std::make_unique<TestBufferImpl<T>>();
+    auto copy = std::make_unique<DemoBufferImpl<T>>();
     copy->storage_ = storage_;  // Deep copy
     return copy;
   }
@@ -209,6 +209,6 @@ private:
   std::vector<T> storage_;
 };
 
-}  // namespace rcl_buffer_test_backend
+}  // namespace demo_buffer_backend
 
-#endif  // RCL_BUFFER_TEST_BACKEND__TEST_BUFFER_IMPL_HPP_
+#endif  // DEMO_BUFFER_BACKEND__DEMO_BUFFER_IMPL_HPP_

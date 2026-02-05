@@ -1,4 +1,4 @@
-# Test buffer descriptor for testing buffer backend plugin system
+# Demo buffer descriptor for demonstrating buffer backend plugin system
 # Contains serialized data and hash for verification
 
 uint64 size                    # Number of elements in buffer

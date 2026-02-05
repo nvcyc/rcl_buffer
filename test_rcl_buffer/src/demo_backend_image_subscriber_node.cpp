@@ -1,6 +1,6 @@
 // Copyright 2024 NVIDIA Corporation
 //
-// Test backend image subscriber node for testing buffer backend plugin system
+// Demo backend image subscriber node for demonstrating buffer backend plugin system
 
 #include <memory>
 #include <vector>
@@ -11,23 +11,23 @@
 #include "std_msgs/msg/bool.hpp"
 #include "rosidl_runtime_cpp/buffer.hpp"
 
-class TestBackendImageSubscriber : public rclcpp::Node
+class DemoBackendImageSubscriber : public rclcpp::Node
 {
 public:
-  TestBackendImageSubscriber()
-  : Node("test_backend_image_subscriber"),
+  DemoBackendImageSubscriber()
+  : Node("demo_backend_image_subscriber"),
     received_count_(0),
     validation_passed_(true)
   {
     subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
-      "test_backend_image", 10,
-      std::bind(&TestBackendImageSubscriber::image_callback, this, std::placeholders::_1));
+      "demo_backend_image", 10,
+      std::bind(&DemoBackendImageSubscriber::image_callback, this, std::placeholders::_1));
 
     // Publishers for test results
     count_publisher_ = this->create_publisher<std_msgs::msg::UInt32>("subscriber_count", 10);
     validation_publisher_ = this->create_publisher<std_msgs::msg::Bool>("validation_result", 10);
 
-    RCLCPP_INFO(this->get_logger(), "Test backend image subscriber started");
+    RCLCPP_INFO(this->get_logger(), "Demo backend image subscriber started");
   }
 
 private:
@@ -63,21 +63,21 @@ private:
       msg_valid = false;
     }
 
-    // Check backend type - accept "test" or "cpu" (CPU is valid fallback for inter-process)
+    // Check backend type - accept "demo" or "cpu" (CPU is valid fallback for inter-process)
     const std::string backend_type = msg->data.get_backend_type();
-    if (backend_type != "test" && backend_type != "cpu") {
+    if (backend_type != "demo" && backend_type != "cpu") {
       RCLCPP_ERROR(
         this->get_logger(),
-        "Unexpected backend type: %s (expected: test or cpu)",
+        "Unexpected backend type: %s (expected: demo or cpu)",
         backend_type.c_str());
       msg_valid = false;
     }
 
     // Log backend type
-    if (backend_type == "test") {
+    if (backend_type == "demo") {
       RCLCPP_INFO(
         this->get_logger(),
-        "Received message using 'test' backend - zero-copy path!");
+        "Received message using 'demo' backend - zero-copy path!");
     } else if (backend_type == "cpu") {
       RCLCPP_INFO(
         this->get_logger(),
@@ -158,7 +158,7 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<TestBackendImageSubscriber>();
+  auto node = std::make_shared<DemoBackendImageSubscriber>();
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;

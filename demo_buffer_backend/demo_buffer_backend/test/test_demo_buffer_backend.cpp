@@ -16,15 +16,15 @@
 #include <memory>
 #include <vector>
 
-#include "rcl_buffer_test_backend/test_buffer_impl.hpp"
-#include "rcl_buffer_test_backend/test_buffer_backend.hpp"
-#include "rcl_buffer_test_backend_msgs/msg/test_buffer_descriptor.hpp"
+#include "demo_buffer_backend/demo_buffer_impl.hpp"
+#include "demo_buffer_backend/demo_buffer_backend.hpp"
+#include "demo_buffer_backend_msgs/msg/demo_buffer_descriptor.hpp"
 
-using rcl_buffer_test_backend::TestBufferImpl;
-using rcl_buffer_test_backend::TestBufferBackend;
-using rcl_buffer_test_backend::compute_fnv1a_hash;
+using demo_buffer_backend::DemoBufferImpl;
+using demo_buffer_backend::DemoBufferBackend;
+using demo_buffer_backend::compute_fnv1a_hash;
 
-class TestBufferImplTest : public ::testing::Test
+class DemoBufferImplTest : public ::testing::Test
 {
 protected:
   void SetUp() override {}
@@ -32,9 +32,9 @@ protected:
 };
 
 // Test basic buffer operations
-TEST_F(TestBufferImplTest, BasicOperations)
+TEST_F(DemoBufferImplTest, BasicOperations)
 {
-  TestBufferImpl<uint8_t> buffer;
+  DemoBufferImpl<uint8_t> buffer;
 
   // Test initial state
   EXPECT_EQ(buffer.size(), 0u);
@@ -51,25 +51,25 @@ TEST_F(TestBufferImplTest, BasicOperations)
 }
 
 // Test constructor with size
-TEST_F(TestBufferImplTest, ConstructorWithSize)
+TEST_F(DemoBufferImplTest, ConstructorWithSize)
 {
-  TestBufferImpl<uint8_t> buffer(256);
+  DemoBufferImpl<uint8_t> buffer(256);
   EXPECT_EQ(buffer.size(), 256u);
   EXPECT_NE(buffer.get_backend_handle(), nullptr);
 }
 
 // Test constructor with vector
-TEST_F(TestBufferImplTest, ConstructorWithVector)
+TEST_F(DemoBufferImplTest, ConstructorWithVector)
 {
   std::vector<uint8_t> data = {1, 2, 3, 4, 5};
-  TestBufferImpl<uint8_t> buffer(data);
+  DemoBufferImpl<uint8_t> buffer(data);
 
   EXPECT_EQ(buffer.size(), 5u);
   EXPECT_EQ(buffer.get_storage(), data);
 }
 
 // Test hash computation
-TEST_F(TestBufferImplTest, HashComputation)
+TEST_F(DemoBufferImplTest, HashComputation)
 {
   std::vector<uint8_t> data1 = {1, 2, 3, 4, 5};
   std::vector<uint8_t> data2 = {1, 2, 3, 4, 6};  // Different last byte
@@ -90,7 +90,7 @@ TEST_F(TestBufferImplTest, HashComputation)
 }
 
 // Test descriptor creation and reconstruction
-TEST_F(TestBufferImplTest, DescriptorRoundTrip)
+TEST_F(DemoBufferImplTest, DescriptorRoundTrip)
 {
   // Create buffer with test data
   std::vector<uint8_t> test_data(1024);
@@ -98,7 +98,7 @@ TEST_F(TestBufferImplTest, DescriptorRoundTrip)
     test_data[i] = static_cast<uint8_t>(i % 256);
   }
 
-  TestBufferImpl<uint8_t> original(test_data);
+  DemoBufferImpl<uint8_t> original(test_data);
   EXPECT_EQ(original.size(), test_data.size());
 
   // Create descriptor
@@ -109,7 +109,7 @@ TEST_F(TestBufferImplTest, DescriptorRoundTrip)
   ASSERT_NE(descriptor_ptr, nullptr);
 
   auto descriptor = std::static_pointer_cast<
-    rcl_buffer_test_backend_msgs::msg::TestBufferDescriptor>(descriptor_ptr);
+    demo_buffer_backend_msgs::msg::DemoBufferDescriptor>(descriptor_ptr);
 
   // Verify descriptor contents
   EXPECT_EQ(descriptor->size, test_data.size());
@@ -117,11 +117,11 @@ TEST_F(TestBufferImplTest, DescriptorRoundTrip)
   EXPECT_NE(descriptor->data_hash, 0u);
 
   // Reconstruct buffer from descriptor
-  TestBufferImpl<uint8_t> temp;
+  DemoBufferImpl<uint8_t> temp;
   auto reconstructed_ptr = temp.from_descriptor(descriptor_ptr, dummy_gid);
   ASSERT_NE(reconstructed_ptr, nullptr);
 
-  auto reconstructed = dynamic_cast<TestBufferImpl<uint8_t> *>(reconstructed_ptr.get());
+  auto reconstructed = dynamic_cast<DemoBufferImpl<uint8_t> *>(reconstructed_ptr.get());
   ASSERT_NE(reconstructed, nullptr);
 
   // Verify reconstructed buffer matches original
@@ -130,10 +130,10 @@ TEST_F(TestBufferImplTest, DescriptorRoundTrip)
 }
 
 // Test to_cpu conversion
-TEST_F(TestBufferImplTest, ToCpuConversion)
+TEST_F(DemoBufferImplTest, ToCpuConversion)
 {
   std::vector<uint8_t> test_data = {10, 20, 30, 40, 50};
-  TestBufferImpl<uint8_t> buffer(test_data);
+  DemoBufferImpl<uint8_t> buffer(test_data);
 
   auto cpu_buffer = buffer.to_cpu();
   ASSERT_NE(cpu_buffer, nullptr);
@@ -141,10 +141,10 @@ TEST_F(TestBufferImplTest, ToCpuConversion)
 }
 
 // Test clone
-TEST_F(TestBufferImplTest, Clone)
+TEST_F(DemoBufferImplTest, Clone)
 {
   std::vector<uint8_t> test_data = {100, 200, 150, 50, 25};
-  TestBufferImpl<uint8_t> original(test_data);
+  DemoBufferImpl<uint8_t> original(test_data);
 
   auto cloned = original.clone();
   ASSERT_NE(cloned, nullptr);
@@ -152,49 +152,49 @@ TEST_F(TestBufferImplTest, Clone)
 
   // Verify it's a deep copy by modifying original
   original.get_storage()[0] = 0;
-  auto cloned_impl = dynamic_cast<TestBufferImpl<uint8_t> *>(cloned.get());
+  auto cloned_impl = dynamic_cast<DemoBufferImpl<uint8_t> *>(cloned.get());
   ASSERT_NE(cloned_impl, nullptr);
   EXPECT_EQ(cloned_impl->get_storage()[0], 100);  // Unchanged
 }
 
-class TestBufferBackendTest : public ::testing::Test
+class DemoBufferBackendTest : public ::testing::Test
 {
 protected:
   void SetUp() override
   {
-    backend_ = std::make_unique<TestBufferBackend>();
+    backend_ = std::make_unique<DemoBufferBackend>();
   }
   void TearDown() override {}
 
-  std::unique_ptr<TestBufferBackend> backend_;
+  std::unique_ptr<DemoBufferBackend> backend_;
 };
 
 // Test backend type name
-TEST_F(TestBufferBackendTest, BackendTypeName)
+TEST_F(DemoBufferBackendTest, BackendTypeName)
 {
   EXPECT_EQ(backend_->get_backend_type(), "test");
 }
 
 // Test backend aux info
-TEST_F(TestBufferBackendTest, BackendAuxInfo)
+TEST_F(DemoBufferBackendTest, BackendAuxInfo)
 {
   EXPECT_EQ(backend_->get_backend_aux_info(), "version=1.0");
 }
 
 // Test descriptor type name
-TEST_F(TestBufferBackendTest, DescriptorTypeName)
+TEST_F(DemoBufferBackendTest, DescriptorTypeName)
 {
   EXPECT_EQ(
     backend_->get_descriptor_type_name(),
-    "rcl_buffer_test_backend_msgs::msg::TestBufferDescriptor");
+    "demo_buffer_backend_msgs::msg::DemoBufferDescriptor");
 }
 
 // Test create_descriptor_with_endpoint
-TEST_F(TestBufferBackendTest, CreateDescriptorWithEndpoint)
+TEST_F(DemoBufferBackendTest, CreateDescriptorWithEndpoint)
 {
   // Create test buffer impl
   std::vector<uint8_t> test_data = {1, 2, 3, 4, 5};
-  auto impl = std::make_shared<TestBufferImpl<uint8_t>>(test_data);
+  auto impl = std::make_shared<DemoBufferImpl<uint8_t>>(test_data);
 
   // Create endpoint info
   rmw_topic_endpoint_info_t endpoint_info;
@@ -206,15 +206,15 @@ TEST_F(TestBufferBackendTest, CreateDescriptorWithEndpoint)
   ASSERT_NE(descriptor, nullptr);
 
   auto typed_desc = std::static_pointer_cast<
-    rcl_buffer_test_backend_msgs::msg::TestBufferDescriptor>(descriptor);
+    demo_buffer_backend_msgs::msg::DemoBufferDescriptor>(descriptor);
   EXPECT_EQ(typed_desc->size, test_data.size());
 }
 
 // Test from_descriptor_with_endpoint
-TEST_F(TestBufferBackendTest, FromDescriptorWithEndpoint)
+TEST_F(DemoBufferBackendTest, FromDescriptorWithEndpoint)
 {
   // Create descriptor directly
-  auto descriptor = std::make_shared<rcl_buffer_test_backend_msgs::msg::TestBufferDescriptor>();
+  auto descriptor = std::make_shared<demo_buffer_backend_msgs::msg::DemoBufferDescriptor>();
   descriptor->size = 5;
   descriptor->element_type_name = typeid(uint8_t).name();
   // Buffer doesn't support initializer list, use vector assignment
@@ -233,7 +233,7 @@ TEST_F(TestBufferBackendTest, FromDescriptorWithEndpoint)
 }
 
 // Test on_discovering_endpoint
-TEST_F(TestBufferBackendTest, OnDiscoveringEndpoint)
+TEST_F(DemoBufferBackendTest, OnDiscoveringEndpoint)
 {
   rmw_topic_endpoint_info_t endpoint_info;
   std::memset(&endpoint_info, 0, sizeof(endpoint_info));
