@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "rosidl_buffer_registry/buffer_backend.hpp"
+#include "rcl_buffer_backend/buffer_backend.hpp"
 #include "demo_buffer_backend/demo_buffer_impl.hpp"
 
 namespace demo_buffer_backend
@@ -30,7 +30,7 @@ namespace demo_buffer_backend
 /// Demo buffer backend implementation for demonstrating the buffer backend plugin system.
 /// This backend is intentionally simple - it stores data on CPU and serializes by copying.
 /// It includes a hash verification mechanism to ensure data integrity.
-class DemoBufferBackend : public rosidl_buffer_registry::BufferBackend
+class DemoBufferBackend : public rcl_buffer::BufferBackend
 {
 public:
   /// Constructor

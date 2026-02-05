@@ -107,4 +107,4 @@ void * DemoBufferBackend::get_descriptor_registration_function() const
 // Export the DemoBufferBackend as a pluginlib plugin
 PLUGINLIB_EXPORT_CLASS(
   demo_buffer_backend::DemoBufferBackend,
-  rosidl_buffer_registry::BufferBackend)
+  rcl_buffer::BufferBackend)

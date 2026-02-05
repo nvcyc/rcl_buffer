@@ -12,8 +12,9 @@ endif()
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rcl_buffer_backend REQUIRED)
 find_package(rosidl_runtime_cpp REQUIRED)
-find_package(rosidl_buffer_registry REQUIRED)
+find_package(rcl_buffer_backend_registry REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(demo_buffer_backend_msgs REQUIRED)
 
@@ -36,8 +37,9 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 ament_target_dependencies(${PROJECT_NAME}
+  rcl_buffer_backend
   rosidl_runtime_cpp
-  rosidl_buffer_registry
+  rcl_buffer_backend_registry
   pluginlib
   demo_buffer_backend_msgs
 )
@@ -64,13 +66,14 @@ install(
 )
 
 # Register plugin with ament index for pluginlib discovery
-pluginlib_export_plugin_description_file(rosidl_buffer_registry demo_buffer_plugin.xml)
+pluginlib_export_plugin_description_file(rcl_buffer_backend demo_buffer_plugin.xml)
 
 # Export dependencies
 ament_export_targets(${PROJECT_NAME})
 ament_export_dependencies(
+  rcl_buffer_backend
   rosidl_runtime_cpp
-  rosidl_buffer_registry
+  rcl_buffer_backend_registry
   pluginlib
   demo_buffer_backend_msgs
 )
@@ -89,8 +92,9 @@ if(BUILD_TESTING)
   if(TARGET test_demo_buffer_backend)
     target_link_libraries(test_demo_buffer_backend ${PROJECT_NAME})
     ament_target_dependencies(test_demo_buffer_backend
+      rcl_buffer_backend
       rosidl_runtime_cpp
-      rosidl_buffer_registry
+      rcl_buffer_backend_registry
       demo_buffer_backend_msgs
     )
   endif()
