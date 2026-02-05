@@ -12,7 +12,7 @@
 #include "sensor_msgs/msg/image.hpp"
 #include "std_msgs/msg/u_int32.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "rosidl_runtime_cpp/buffer.hpp"
+#include "rcl_buffer/buffer.hpp"
 
 class DemoBackendImageSubscriber : public rclcpp::Node
 {

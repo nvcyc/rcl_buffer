@@ -20,8 +20,8 @@
 #include <vector>
 
 #include "rcl_buffer_backend/buffer_backend.hpp"
-#include "rosidl_runtime_cpp/buffer_impl_base.hpp"
-#include "rosidl_runtime_cpp/cpu_buffer_impl.hpp"
+#include "rcl_buffer/buffer_impl_base.hpp"
+#include "rcl_buffer/cpu_buffer_impl.hpp"
 
 // For pluginlib export
 #include <pluginlib/class_list_macros.hpp>
@@ -34,7 +34,7 @@ namespace test
 /// Dummy backend implementation for testing.
 /// Acts like CPU backend but adds a marker to verify it's being used.
 template<typename T>
-class DummyBufferImpl : public rosidl_runtime_cpp::BufferImplBase<T>
+class DummyBufferImpl : public rcl_buffer::BufferImplBase<T>
 {
 public:
   DummyBufferImpl()
@@ -55,9 +55,9 @@ public:
     return data_.empty() ? nullptr : data_.data();
   }
 
-  std::unique_ptr<rosidl_runtime_cpp::BufferImplBase<T>> to_cpu() const override
+  std::unique_ptr<rcl_buffer::BufferImplBase<T>> to_cpu() const override
   {
-    auto cpu = std::make_unique<rosidl_runtime_cpp::CpuBufferImpl<T>>();
+    auto cpu = std::make_unique<rcl_buffer::CpuBufferImpl<T>>();
     cpu->get_storage() = data_;
     return cpu;
   }
@@ -74,7 +74,7 @@ public:
     return nullptr;
   }
 
-  std::unique_ptr<rosidl_runtime_cpp::BufferImplBase<T>> from_descriptor(
+  std::unique_ptr<rcl_buffer::BufferImplBase<T>> from_descriptor(
     const std::shared_ptr<void> & descriptor,
     const rmw_gid_t & publisher_gid) const override
   {
@@ -84,7 +84,7 @@ public:
     return nullptr;
   }
 
-  std::unique_ptr<rosidl_runtime_cpp::BufferImplBase<T>> clone() const override
+  std::unique_ptr<rcl_buffer::BufferImplBase<T>> clone() const override
   {
     auto cloned = std::make_unique<DummyBufferImpl<T>>();
     cloned->data_ = data_;

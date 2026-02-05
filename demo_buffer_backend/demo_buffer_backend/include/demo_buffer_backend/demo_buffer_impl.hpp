@@ -24,8 +24,8 @@
 #include <typeinfo>
 #include <vector>
 
-#include "rosidl_runtime_cpp/buffer_impl_base.hpp"
-#include "rosidl_runtime_cpp/cpu_buffer_impl.hpp"
+#include "rcl_buffer/buffer_impl_base.hpp"
+#include "rcl_buffer/cpu_buffer_impl.hpp"
 #include "demo_buffer_backend_msgs/msg/demo_buffer_descriptor.hpp"
 #include "rmw/types.h"
 
@@ -54,7 +54,7 @@ inline uint64_t compute_fnv1a_hash(const uint8_t * data, size_t size)
 /// This is a simple implementation for demonstrating the buffer backend plugin system.
 /// It serializes data by copying and includes a hash for verification.
 template<typename T>
-class DemoBufferImpl : public rosidl_runtime_cpp::BufferImplBase<T>
+class DemoBufferImpl : public rcl_buffer::BufferImplBase<T>
 {
 public:
   DemoBufferImpl() = default;
@@ -105,10 +105,10 @@ public:
     return storage_.empty() ? nullptr : storage_.data();
   }
 
-  std::unique_ptr<rosidl_runtime_cpp::BufferImplBase<T>> to_cpu() const override
+  std::unique_ptr<rcl_buffer::BufferImplBase<T>> to_cpu() const override
   {
     // DemoBufferImpl stores data on CPU, so just copy to CpuBufferImpl
-    auto cpu = std::make_unique<rosidl_runtime_cpp::CpuBufferImpl<T>>();
+    auto cpu = std::make_unique<rcl_buffer::CpuBufferImpl<T>>();
     cpu->get_storage() = storage_;
     return cpu;
   }
@@ -152,7 +152,7 @@ public:
     return descriptor;
   }
 
-  std::unique_ptr<rosidl_runtime_cpp::BufferImplBase<T>> from_descriptor(
+  std::unique_ptr<rcl_buffer::BufferImplBase<T>> from_descriptor(
     const std::shared_ptr<void> & descriptor_ptr,
     const rmw_gid_t & publisher_gid) const override
   {
@@ -198,7 +198,7 @@ public:
     return impl;
   }
 
-  std::unique_ptr<rosidl_runtime_cpp::BufferImplBase<T>> clone() const override
+  std::unique_ptr<rcl_buffer::BufferImplBase<T>> clone() const override
   {
     auto copy = std::make_unique<DemoBufferImpl<T>>();
     copy->storage_ = storage_;  // Deep copy

@@ -1,6 +1,6 @@
 // Copyright 2024 NVIDIA Corporation
 //
-// Simple test to verify rosidl_runtime_cpp::Buffer works with sensor_msgs::msg::Image
+// Simple test to verify rcl_buffer::Buffer works with sensor_msgs::msg::Image
 
 #include <iostream>
 #include <vector>
@@ -97,7 +97,7 @@ int main()
   }
 
   std::cout << "\n=== ALL TESTS PASSED ===\n";
-  std::cout << "sensor_msgs::msg::Image works correctly with rosidl_runtime_cpp::Buffer!\n";
+  std::cout << "sensor_msgs::msg::Image works correctly with rcl_buffer::Buffer!\n";
   
   return 0;
 }
