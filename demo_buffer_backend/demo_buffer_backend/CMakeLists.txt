@@ -17,6 +17,7 @@ find_package(rosidl_runtime_cpp REQUIRED)
 find_package(rcl_buffer_backend_registry REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(demo_buffer_backend_msgs REQUIRED)
+find_package(rcutils REQUIRED)
 
 # Build the demo backend plugin library
 add_library(${PROJECT_NAME} SHARED
@@ -38,6 +39,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   rosidl_runtime_cpp::rosidl_runtime_cpp
   rcl_buffer_backend_registry::rcl_buffer_backend_registry
   pluginlib::pluginlib
+  rcutils::rcutils
   ${demo_buffer_backend_msgs_TARGETS}
 )
 
@@ -74,6 +76,7 @@ ament_export_dependencies(
   rcl_buffer_backend_registry
   pluginlib
   demo_buffer_backend_msgs
+  rcutils
 )
 
 if(BUILD_TESTING)

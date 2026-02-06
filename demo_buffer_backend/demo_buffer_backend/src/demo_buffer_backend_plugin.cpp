@@ -15,7 +15,7 @@
 #include "demo_buffer_backend/demo_buffer_backend.hpp"
 
 #include <pluginlib/class_list_macros.hpp>
-#include <iostream>
+#include <rcutils/logging_macros.h>
 
 // Declare external registration function from the descriptor message package
 // This is provided by demo_buffer_backend_msgs_fastrtps_registration library
@@ -27,16 +27,18 @@ namespace demo_buffer_backend
 //==============================================================================
 DemoBufferBackend::DemoBufferBackend()
 {
-  std::cerr << "[DemoBufferBackend] DemoBufferBackend created\n";
+  RCUTILS_LOG_INFO_NAMED("demo_buffer_backend", "DemoBufferBackend created");
 }
 
 //==============================================================================
 void DemoBufferBackend::on_creating_endpoint(
   const rmw_topic_endpoint_info_t & endpoint_info) const
 {
-  std::cerr << "[DemoBufferBackend] on_creating_endpoint() called for topic: "
-            << endpoint_info.topic_type
-            << " (endpoint_type=" << static_cast<int>(endpoint_info.endpoint_type) << ")\n";
+  RCUTILS_LOG_INFO_NAMED(
+    "demo_buffer_backend",
+    "on_creating_endpoint() called for topic: %s (endpoint_type=%d)",
+    endpoint_info.topic_type,
+    static_cast<int>(endpoint_info.endpoint_type));
 }
 
 //==============================================================================
@@ -53,10 +55,14 @@ DemoBufferBackend::on_discovering_endpoint(
     endpoint_supported_backends.end();
 
   if (supports_demo) {
-    std::cerr << "[DemoBufferBackend] Discovered endpoint supports 'demo' backend for topic: "
-              << endpoint_info.topic_type << "\n";
+    RCUTILS_LOG_INFO_NAMED(
+      "demo_buffer_backend",
+      "Discovered endpoint supports 'demo' backend for topic: %s",
+      endpoint_info.topic_type);
   } else {
-    std::cerr << "[DemoBufferBackend] Discovered endpoint does NOT support 'demo' backend\n";
+    RCUTILS_LOG_INFO_NAMED(
+      "demo_buffer_backend",
+      "Discovered endpoint does NOT support 'demo' backend");
   }
 
   // Demo backend is always compatible with other demo backends

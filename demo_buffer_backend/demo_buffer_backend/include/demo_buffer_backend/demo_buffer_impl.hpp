@@ -18,11 +18,12 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <typeinfo>
 #include <vector>
+
+#include <rcutils/logging_macros.h>
 
 #include "rcl_buffer/buffer_impl_base.hpp"
 #include "rcl_buffer/cpu_buffer_impl.hpp"
@@ -124,8 +125,10 @@ public:
   {
     (void)subscriber_gid;  // Not used for demo backend
 
-    std::cerr << "[DemoBufferImpl] create_descriptor() called, size=" << storage_.size()
-              << " elements\n";
+    RCUTILS_LOG_INFO_NAMED(
+      "demo_buffer_backend",
+      "create_descriptor() called, size=%zu elements",
+      storage_.size());
 
     auto descriptor = std::make_shared<demo_buffer_backend_msgs::msg::DemoBufferDescriptor>();
 
@@ -146,8 +149,11 @@ public:
       reinterpret_cast<const uint8_t *>(storage_.data()),
       storage_.size() * sizeof(T));
 
-    std::cerr << "[DemoBufferImpl] Descriptor created: size=" << descriptor->size
-              << ", data_hash=" << descriptor->data_hash << "\n";
+    RCUTILS_LOG_INFO_NAMED(
+      "demo_buffer_backend",
+      "Descriptor created: size=%zu, data_hash=%lu",
+      descriptor->size,
+      descriptor->data_hash);
 
     return descriptor;
   }
@@ -161,8 +167,11 @@ public:
     auto descriptor = std::static_pointer_cast<demo_buffer_backend_msgs::msg::DemoBufferDescriptor>(
       descriptor_ptr);
 
-    std::cerr << "[DemoBufferImpl] from_descriptor() called, size=" << descriptor->size
-              << " elements, data_hash=" << descriptor->data_hash << "\n";
+    RCUTILS_LOG_INFO_NAMED(
+      "demo_buffer_backend",
+      "from_descriptor() called, size=%zu elements, data_hash=%lu",
+      descriptor->size,
+      descriptor->data_hash);
 
     // Validate element type
     if (descriptor->element_type_name != typeid(T).name()) {
@@ -187,12 +196,15 @@ public:
         impl->storage_.size() * sizeof(T));
 
       if (computed_hash != descriptor->data_hash) {
-        std::cerr << "[DemoBufferImpl] WARNING: Hash mismatch! Expected "
-                  << descriptor->data_hash << ", computed " << computed_hash << "\n";
+        RCUTILS_LOG_WARN_NAMED(
+          "demo_buffer_backend",
+          "Hash mismatch! Expected %lu, computed %lu",
+          descriptor->data_hash,
+          computed_hash);
         throw std::runtime_error("DemoBufferDescriptor hash verification failed");
       }
 
-      std::cerr << "[DemoBufferImpl] Hash verified successfully\n";
+      RCUTILS_LOG_INFO_NAMED("demo_buffer_backend", "Hash verified successfully");
     }
 
     return impl;
