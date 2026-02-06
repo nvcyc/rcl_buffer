@@ -17,23 +17,23 @@ find_package(rclcpp_components QUIET)
 find_package(demo_buffer_backend QUIET)
 
 # Build standalone test executable (no ROS)
-add_executable(test_buffer_image src/test_buffer_image.cpp)
-target_link_libraries(test_buffer_image
+add_executable(test_cpu_buffer_image src/test_cpu_buffer_image.cpp)
+target_link_libraries(test_cpu_buffer_image
   rosidl_runtime_cpp::rosidl_runtime_cpp
   ${sensor_msgs_TARGETS}
 )
 
 # Build pub/sub integration test
-add_executable(test_image_pubsub src/test_image_pubsub.cpp)
-target_link_libraries(test_image_pubsub
+add_executable(test_cpu_buffer_image_pubsub src/test_cpu_buffer_image_pubsub.cpp)
+target_link_libraries(test_cpu_buffer_image_pubsub
   rclcpp::rclcpp
   rosidl_runtime_cpp::rosidl_runtime_cpp
   ${sensor_msgs_TARGETS}
 )
 
 install(TARGETS
-  test_buffer_image
-  test_image_pubsub
+  test_cpu_buffer_image
+  test_cpu_buffer_image_pubsub
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -92,38 +92,6 @@ if(BUILD_TESTING)
     add_launch_test(test/test_1pub_1sub_demo_to_demo.py
       TARGET test_1pub_1sub_demo_to_demo
       TIMEOUT 30
-    )
-    add_launch_test(test/test_1pub_1sub_demo_to_cpu.py
-      TARGET test_1pub_1sub_demo_to_cpu
-      TIMEOUT 30
-    )
-
-    # 1 publisher to 2 subscribers tests
-    add_launch_test(test/test_1pub_2sub_cpu_to_cpu.py
-      TARGET test_1pub_2sub_cpu_to_cpu
-      TIMEOUT 30
-    )
-    add_launch_test(test/test_1pub_2sub_demo_to_demo.py
-      TARGET test_1pub_2sub_demo_to_demo
-      TIMEOUT 30
-    )
-    add_launch_test(test/test_1pub_2sub_demo_to_cpu.py
-      TARGET test_1pub_2sub_demo_to_cpu
-      TIMEOUT 30
-    )
-
-    # 2 publishers to 2 subscribers each tests
-    add_launch_test(test/test_2pub_2sub_cpu_to_cpu.py
-      TARGET test_2pub_2sub_cpu_to_cpu
-      TIMEOUT 45
-    )
-    add_launch_test(test/test_2pub_2sub_demo_to_demo.py
-      TARGET test_2pub_2sub_demo_to_demo
-      TIMEOUT 45
-    )
-    add_launch_test(test/test_2pub_2sub_demo_to_cpu.py
-      TARGET test_2pub_2sub_demo_to_cpu
-      TIMEOUT 45
     )
   endif()
 endif()

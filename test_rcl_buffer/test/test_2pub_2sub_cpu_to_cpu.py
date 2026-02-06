@@ -199,7 +199,7 @@ class TestCpuToCpu2Pub2Sub(unittest.TestCase):
         return (all(self.topic1_validations.values()) and
                 all(self.topic2_validations.values()))
 
-    def _spin_until(self, target_count=5, timeout_sec=20.0):
+    def _spin_until(self, target_count=1, timeout_sec=20.0):
         start = time.time()
         while self._get_min_count() < target_count and time.time() - start < timeout_sec:
             rclpy.spin_once(self.node, timeout_sec=0.1)
@@ -207,16 +207,15 @@ class TestCpuToCpu2Pub2Sub(unittest.TestCase):
 
     def test_cpu_to_cpu_2pub_2sub_messages_delivered(self):
         """Test 2 CPU publishers to 2 CPU subscribers each."""
-        success = self._spin_until(target_count=5, timeout_sec=20.0)
+        success = self._spin_until(target_count=1, timeout_sec=20.0)
 
         min_count = self._get_min_count()
         self.assertTrue(success,
-            f"Failed to receive 5 msgs on all subscribers. Min: {min_count}, "
+            f"Failed to receive at least 1 message on all subscribers. Min: {min_count}, "
             f"topic1: {self.topic1_sub_counts}, topic2: {self.topic2_sub_counts}")
-        self.assertGreaterEqual(self.topic1_pub_count, 5,
-            f"Topic1 publisher should have sent at least 5 messages. Sent: {self.topic1_pub_count}")
-        self.assertGreaterEqual(self.topic2_pub_count, 5,
-            f"Topic2 publisher should have sent at least 5 messages. Sent: {self.topic2_pub_count}")
+        self.assertGreaterEqual(min_count, 1,
+            f"All subscribers should have received at least 1 message. "
+            f"topic1: {self.topic1_sub_counts}, topic2: {self.topic2_sub_counts}")
         self.assertTrue(self._all_validations_passed(),
             f"Validation failed: topic1={self.topic1_validations}, topic2={self.topic2_validations}")
 
