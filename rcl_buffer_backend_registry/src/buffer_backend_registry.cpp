@@ -86,7 +86,7 @@ void BufferBackendRegistry::load_plugins()
         if (declared_classes.empty()) {
           RCUTILS_LOG_INFO_NAMED("rcl_buffer_backend_registry", "No buffer backend plugins found");
         } else {
-          RCUTILS_LOG_INFO_NAMED("rcl_buffer_backend_registry", "Discovered %d buffer backend plugin(s)", declared_classes.size());
+          RCUTILS_LOG_INFO_NAMED("rcl_buffer_backend_registry", "Discovered %zu buffer backend plugin(s)", declared_classes.size());
           for (const auto & class_name : declared_classes) {
             try {
               auto backend = loader_->createSharedInstance(class_name);

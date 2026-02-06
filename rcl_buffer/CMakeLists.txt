@@ -23,8 +23,8 @@ target_include_directories(${PROJECT_NAME} INTERFACE
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
-ament_target_dependencies(${PROJECT_NAME} INTERFACE
-  rmw
+target_link_libraries(${PROJECT_NAME} INTERFACE
+  rmw::rmw
 )
 
 # Install headers
@@ -33,10 +33,16 @@ install(
   DESTINATION include/${PROJECT_NAME}
 )
 
+# Install library target
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT ${PROJECT_NAME}
+  INCLUDES DESTINATION include/${PROJECT_NAME}
+)
+
 # Export modern CMake targets
 ament_export_targets(${PROJECT_NAME})
 ament_export_dependencies(rmw)
-ament_export_include_directories(include/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -49,10 +55,5 @@ if(BUILD_TESTING)
     target_link_libraries(test_buffer ${PROJECT_NAME})
   endif()
 endif()
-
-install(
-  TARGETS ${PROJECT_NAME}
-  EXPORT ${PROJECT_NAME}
-)
 
 ament_package()

@@ -31,11 +31,11 @@ target_compile_definitions(${PROJECT_NAME}
   PRIVATE "RCL_BUFFER_BACKEND_REGISTRY_BUILDING_DLL"
 )
 
-ament_target_dependencies(${PROJECT_NAME}
-  rcl_buffer_backend
-  rmw
-  rosidl_runtime_cpp
-  pluginlib
+target_link_libraries(${PROJECT_NAME} PUBLIC
+  rcl_buffer_backend::rcl_buffer_backend
+  rmw::rmw
+  rosidl_runtime_cpp::rosidl_runtime_cpp
+  pluginlib::pluginlib
 )
 
 # Install headers
@@ -51,12 +51,12 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include/${PROJECT_NAME}
 )
 
 # Export dependencies
-ament_export_targets(${PROJECT_NAME})
+ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(rcl_buffer_backend rmw rosidl_runtime_cpp pluginlib)
-ament_export_include_directories(include/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -72,12 +72,12 @@ if(BUILD_TESTING)
     target_include_directories(test_buffer_backend_registry PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}/test
     )
-    target_link_libraries(test_buffer_backend_registry ${PROJECT_NAME})
-    ament_target_dependencies(test_buffer_backend_registry
-      rcl_buffer_backend
-      rmw
-      rosidl_runtime_cpp
-      pluginlib
+    target_link_libraries(test_buffer_backend_registry
+      ${PROJECT_NAME}
+      rcl_buffer_backend::rcl_buffer_backend
+      rmw::rmw
+      rosidl_runtime_cpp::rosidl_runtime_cpp
+      pluginlib::pluginlib
     )
   endif()
 endif()

@@ -29,12 +29,9 @@ add_library(${PROJECT_NAME}_fastrtps_registration SHARED
 # Ensure the registration library is built after the message library
 rosidl_get_typesupport_target(fastrtps_target ${PROJECT_NAME} rosidl_typesupport_fastrtps_cpp)
 
-target_link_libraries(${PROJECT_NAME}_fastrtps_registration
+target_link_libraries(${PROJECT_NAME}_fastrtps_registration PUBLIC
   ${fastrtps_target}
-)
-
-ament_target_dependencies(${PROJECT_NAME}_fastrtps_registration
-  rosidl_typesupport_fastrtps_cpp
+  rosidl_typesupport_fastrtps_cpp::rosidl_typesupport_fastrtps_cpp
 )
 
 # Create an alias to support namespaced access

@@ -30,18 +30,15 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 # Link against the FastRTPS registration library
 # Force the linker to keep the library even without explicit symbol references
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME} PUBLIC
   -Wl,--no-as-needed
   demo_buffer_backend_msgs::demo_buffer_backend_msgs_fastrtps_registration
   -Wl,--as-needed
-)
-
-ament_target_dependencies(${PROJECT_NAME}
-  rcl_buffer_backend
-  rosidl_runtime_cpp
-  rcl_buffer_backend_registry
-  pluginlib
-  demo_buffer_backend_msgs
+  rcl_buffer_backend::rcl_buffer_backend
+  rosidl_runtime_cpp::rosidl_runtime_cpp
+  rcl_buffer_backend_registry::rcl_buffer_backend_registry
+  pluginlib::pluginlib
+  ${demo_buffer_backend_msgs_TARGETS}
 )
 
 # Install headers
@@ -57,6 +54,7 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include/${PROJECT_NAME}
 )
 
 # Install plugin descriptor (CRITICAL for pluginlib discovery)
@@ -69,7 +67,7 @@ install(
 pluginlib_export_plugin_description_file(rcl_buffer_backend demo_buffer_plugin.xml)
 
 # Export dependencies
-ament_export_targets(${PROJECT_NAME})
+ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(
   rcl_buffer_backend
   rosidl_runtime_cpp
@@ -77,7 +75,6 @@ ament_export_dependencies(
   pluginlib
   demo_buffer_backend_msgs
 )
-ament_export_include_directories(include/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -90,12 +87,12 @@ if(BUILD_TESTING)
     test/test_demo_buffer_backend.cpp
   )
   if(TARGET test_demo_buffer_backend)
-    target_link_libraries(test_demo_buffer_backend ${PROJECT_NAME})
-    ament_target_dependencies(test_demo_buffer_backend
-      rcl_buffer_backend
-      rosidl_runtime_cpp
-      rcl_buffer_backend_registry
-      demo_buffer_backend_msgs
+    target_link_libraries(test_demo_buffer_backend
+      ${PROJECT_NAME}
+      rcl_buffer_backend::rcl_buffer_backend
+      rosidl_runtime_cpp::rosidl_runtime_cpp
+      rcl_buffer_backend_registry::rcl_buffer_backend_registry
+      ${demo_buffer_backend_msgs_TARGETS}
     )
   endif()
 endif()

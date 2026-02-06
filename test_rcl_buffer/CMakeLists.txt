@@ -18,11 +18,18 @@ find_package(demo_buffer_backend QUIET)
 
 # Build standalone test executable (no ROS)
 add_executable(test_buffer_image src/test_buffer_image.cpp)
-ament_target_dependencies(test_buffer_image sensor_msgs rosidl_runtime_cpp)
+target_link_libraries(test_buffer_image
+  rosidl_runtime_cpp::rosidl_runtime_cpp
+  ${sensor_msgs_TARGETS}
+)
 
 # Build pub/sub integration test
 add_executable(test_image_pubsub src/test_image_pubsub.cpp)
-ament_target_dependencies(test_image_pubsub rclcpp sensor_msgs rosidl_runtime_cpp)
+target_link_libraries(test_image_pubsub
+  rclcpp::rclcpp
+  rosidl_runtime_cpp::rosidl_runtime_cpp
+  ${sensor_msgs_TARGETS}
+)
 
 install(TARGETS
   test_buffer_image
@@ -40,23 +47,21 @@ if(demo_buffer_backend_FOUND)
   )
   target_link_libraries(demo_backend_image_publisher_node
     demo_buffer_backend::demo_buffer_backend
-  )
-  ament_target_dependencies(demo_backend_image_publisher_node
-    rclcpp
-    sensor_msgs
-    std_msgs
-    rosidl_runtime_cpp
+    rclcpp::rclcpp
+    rosidl_runtime_cpp::rosidl_runtime_cpp
+    ${sensor_msgs_TARGETS}
+    ${std_msgs_TARGETS}
   )
 
   # Demo backend image subscriber (standalone executable)
   add_executable(demo_backend_image_subscriber_node
     src/demo_backend_image_subscriber_node.cpp
   )
-  ament_target_dependencies(demo_backend_image_subscriber_node
-    rclcpp
-    sensor_msgs
-    std_msgs
-    rosidl_runtime_cpp
+  target_link_libraries(demo_backend_image_subscriber_node
+    rclcpp::rclcpp
+    rosidl_runtime_cpp::rosidl_runtime_cpp
+    ${sensor_msgs_TARGETS}
+    ${std_msgs_TARGETS}
   )
 
   install(TARGETS

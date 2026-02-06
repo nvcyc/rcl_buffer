@@ -65,7 +65,7 @@ TEST(TestDummyBufferImpl, to_cpu_conversion) {
   ASSERT_NE(nullptr, cpu_impl);
   EXPECT_EQ(4u, cpu_impl->size());
 
-  auto * cpu = static_cast<rosidl_runtime_cpp::CpuBufferImpl<int> *>(cpu_impl.get());
+  auto * cpu = static_cast<rcl_buffer::CpuBufferImpl<int> *>(cpu_impl.get());
   EXPECT_EQ(10, cpu->get_storage()[0]);
   EXPECT_EQ(20, cpu->get_storage()[1]);
   EXPECT_EQ(30, cpu->get_storage()[2]);
