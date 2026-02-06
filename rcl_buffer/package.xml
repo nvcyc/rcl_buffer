@@ -5,10 +5,11 @@
   <version>1.0.0</version>
   <description>
     Core Buffer types and implementations for ROS2 native buffer feature.
-    Provides Buffer&lt;T&gt; container type with support for multiple memory backends (CPU, GPU, custom).
+    Provides Buffer container type with support for multiple memory backends (CPU, GPU, custom).
   </description>
   
-  <maintainer email="isaac-ros@nvidia.com">Isaac ROS Team</maintainer>
+  <maintainer email="cyc@nvidia.com">CY Chen</maintainer>
+  
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

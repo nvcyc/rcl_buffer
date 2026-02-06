@@ -5,7 +5,8 @@
   <version>1.0.0</version>
   <description>Backend discovery and plugin loading for ROS2 buffer types</description>
   
-  <maintainer email="isaac-ros@nvidia.com">Isaac ROS Team</maintainer>
+  <maintainer email="cyc@nvidia.com">CY Chen</maintainer>
+  
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
