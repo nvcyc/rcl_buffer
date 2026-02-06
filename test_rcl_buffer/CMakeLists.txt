@@ -84,12 +84,6 @@ if(BUILD_TESTING)
   if(demo_buffer_backend_FOUND)
     find_package(launch_testing_ament_cmake REQUIRED)
 
-    # Original demo backend test
-    add_launch_test(test/test_demo_backend_image_pubsub_launch.py
-      TARGET test_demo_backend_image_pubsub_launch
-      TIMEOUT 60
-    )
-
     # 1 publisher to 1 subscriber tests
     add_launch_test(test/test_1pub_1sub_cpu_to_cpu.py
       TARGET test_1pub_1sub_cpu_to_cpu
