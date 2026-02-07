@@ -18,6 +18,7 @@ import time
 import unittest
 
 from launch import LaunchDescription
+from launch.actions import ExecuteProcess
 from launch.actions import SetEnvironmentVariable
 from launch_ros.actions import Node
 import launch_testing
@@ -58,8 +59,16 @@ def generate_test_description():
         }],
     )
 
+    # Start Zenoh router
+    zenoh_router = ExecuteProcess(
+        cmd=['ros2', 'run', 'rmw_zenoh_cpp', 'rmw_zenohd'],
+        name='zenoh-router',
+        output='screen',
+    )
+
     return LaunchDescription([
         SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_zenoh_cpp'),
+        zenoh_router,
         publisher_node,
         subscriber_node,
         launch_testing.actions.ReadyToTest(),
