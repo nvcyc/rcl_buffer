@@ -117,6 +117,120 @@ std::vector<std::string> BufferBackendRegistry::get_backend_names() const
   return names;
 }
 
+std::vector<std::string> BufferBackendRegistry::get_backend_types()
+{
+  // Ensure plugins are loaded
+  if (!plugins_loaded_) {
+    load_plugins();
+  }
+
+  std::vector<std::string> backend_types;
+
+  // Always include CPU backend
+  backend_types.push_back("cpu");
+
+  // Get additional backends from loaded plugins
+  for (const auto & pair : backends_) {
+    auto & backend = pair.second;
+    if (backend) {
+      std::string backend_type = backend->get_backend_type();
+      // Avoid duplicating CPU if it's in the registry
+      if (backend_type != "cpu") {
+        backend_types.push_back(backend_type);
+      }
+    }
+  }
+
+  return backend_types;
+}
+
+std::unordered_map<std::string, std::string> BufferBackendRegistry::get_all_aux_info()
+{
+  // Ensure plugins are loaded
+  if (!plugins_loaded_) {
+    load_plugins();
+  }
+
+  std::unordered_map<std::string, std::string> aux_info;
+  for (const auto & pair : backends_) {
+    if (pair.second) {
+      aux_info[pair.first] = pair.second->get_backend_aux_info();
+    }
+  }
+  return aux_info;
+}
+
+void BufferBackendRegistry::notify_endpoint_created(
+  const rmw_topic_endpoint_info_t & endpoint_info)
+{
+  for (const auto & pair : backends_) {
+    if (pair.second) {
+      pair.second->on_creating_endpoint(endpoint_info);
+    }
+  }
+}
+
+std::unordered_map<std::string, bool> BufferBackendRegistry::notify_endpoint_discovered(
+  const rmw_topic_endpoint_info_t & endpoint_info,
+  const std::vector<rmw_topic_endpoint_info_t> & existing_endpoints,
+  std::unordered_map<std::string, std::vector<std::set<uint32_t>>> & backend_endpoint_groups,
+  const std::unordered_map<std::string, std::string> & endpoint_supported_backends)
+{
+  std::unordered_map<std::string, bool> backend_compatibility;
+  for (const auto & pair : backends_) {
+    const auto & backend_name = pair.first;
+    const auto & backend = pair.second;
+    if (!backend) {
+      backend_compatibility[backend_name] = false;
+      backend_endpoint_groups[backend_name] = {};
+      continue;
+    }
+    auto result = backend->on_discovering_endpoint(
+      endpoint_info, existing_endpoints, endpoint_supported_backends);
+    backend_compatibility[backend_name] = result.first;
+    backend_endpoint_groups[backend_name] = std::move(result.second);
+  }
+  return backend_compatibility;
+}
+
+bool BufferBackendRegistry::backends_compatible(
+  const std::vector<std::string> & a,
+  const std::vector<std::string> & b)
+{
+  for (const auto & backend_a : a) {
+    for (const auto & backend_b : b) {
+      if (backend_a == backend_b) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+std::vector<std::string> BufferBackendRegistry::get_common_backends(
+  const std::vector<std::string> & a,
+  const std::vector<std::string> & b)
+{
+  std::vector<std::string> common;
+  for (const auto & backend_a : a) {
+    for (const auto & backend_b : b) {
+      if (backend_a == backend_b) {
+        bool already_added = false;
+        for (const auto & c : common) {
+          if (c == backend_a) {
+            already_added = true;
+            break;
+          }
+        }
+        if (!already_added) {
+          common.push_back(backend_a);
+        }
+      }
+    }
+  }
+  return common;
+}
+
 void BufferBackendRegistry::clear_global_state()
 {
   // CRITICAL: Clear backends_ map to release shared_ptr to plugin instances
