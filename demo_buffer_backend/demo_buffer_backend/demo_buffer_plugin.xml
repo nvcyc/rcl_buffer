@@ -1,0 +1,8 @@
+<!-- Plugin descriptor for demo buffer backend -->
+<library path="demo_buffer_backend">
+  <class name="demo"
+         type="demo_buffer_backend::DemoBufferBackend"
+         base_class_type="rcl_buffer::BufferBackend">
+    <description>Demo backend for buffer serialization with hash verification</description>
+  </class>
+</library>
