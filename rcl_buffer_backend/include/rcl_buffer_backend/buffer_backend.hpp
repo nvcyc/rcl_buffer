@@ -93,16 +93,6 @@ public:
     return {true, {}};
   }
 
-  /// Get a function pointer for registering descriptor serialization with a specific technology.
-  /// This is optional - backends that don't provide descriptor serialization return nullptr.
-  /// The function pointer can be cast to the appropriate type by the serialization layer.
-  /// For example, for FastRTPS, this would return a void(*)() function that calls
-  /// REGISTER_BUFFER_DESCRIPTOR_TYPE.
-  /// @return Function pointer for registration, or nullptr if not available.
-  virtual void * get_descriptor_registration_function() const
-  {
-    return nullptr;  // Default: no registration function
-  }
 };
 
 }  // namespace rcl_buffer

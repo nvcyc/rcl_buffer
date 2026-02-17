@@ -13,39 +13,11 @@ endif()
 # Find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
-find_package(rosidl_typesupport_fastrtps_cpp REQUIRED)
 
 # Generate interfaces
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DemoBufferDescriptor.msg"
 )
-
-# Build FastRTPS serialization registration library
-# This allows RMW layer to dynamically register test buffer descriptor serialization
-add_library(${PROJECT_NAME}_fastrtps_registration SHARED
-  src/register_fastrtps_serialization.cpp
-)
-
-# Ensure the registration library is built after the message library
-rosidl_get_typesupport_target(fastrtps_target ${PROJECT_NAME} rosidl_typesupport_fastrtps_cpp)
-
-target_link_libraries(${PROJECT_NAME}_fastrtps_registration PUBLIC
-  ${fastrtps_target}
-  rosidl_typesupport_fastrtps_cpp::rosidl_typesupport_fastrtps_cpp
-)
-
-# Create an alias to support namespaced access
-add_library(${PROJECT_NAME}::${PROJECT_NAME}_fastrtps_registration ALIAS ${PROJECT_NAME}_fastrtps_registration)
-
-install(TARGETS ${PROJECT_NAME}_fastrtps_registration
-  EXPORT export_${PROJECT_NAME}_fastrtps_registration
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
-
-# Export the targets - makes them available to packages that depend on this package
-ament_export_targets(export_${PROJECT_NAME}_fastrtps_registration HAS_LIBRARY_TARGET)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

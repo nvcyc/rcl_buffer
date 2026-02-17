@@ -17,9 +17,8 @@
 #include <pluginlib/class_list_macros.hpp>
 #include <rcutils/logging_macros.h>
 
-// Declare external registration function from the descriptor message package
-// This is provided by demo_buffer_backend_msgs_fastrtps_registration library
-extern "C" void register_demo_buffer_descriptor_fastrtps();
+#include "demo_buffer_backend_msgs/msg/demo_buffer_descriptor.hpp"
+#include "rcl_buffer_backend/register_buffer_descriptor.hpp"
 
 namespace demo_buffer_backend
 {
@@ -28,6 +27,11 @@ namespace demo_buffer_backend
 DemoBufferBackend::DemoBufferBackend()
 {
   RCUTILS_LOG_INFO_NAMED("demo_buffer_backend", "DemoBufferBackend created");
+
+  // Register FastCDR descriptor serializers automatically using the
+  // rosidl-generated type support for DemoBufferDescriptor.
+  rcl_buffer::register_buffer_descriptor<
+    demo_buffer_backend_msgs::msg::DemoBufferDescriptor>(get_backend_type());
 }
 
 //==============================================================================
@@ -100,12 +104,6 @@ std::shared_ptr<void> DemoBufferBackend::from_descriptor_with_endpoint(
 
   auto result = temp_impl->from_descriptor(descriptor, dummy_gid);
   return result;
-}
-
-//==============================================================================
-void * DemoBufferBackend::get_descriptor_registration_function() const
-{
-  return reinterpret_cast<void *>(&register_demo_buffer_descriptor_fastrtps);
 }
 
 }  // namespace demo_buffer_backend

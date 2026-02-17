@@ -17,6 +17,7 @@ find_package(rosidl_runtime_cpp REQUIRED)
 find_package(rcl_buffer_backend_registry REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(demo_buffer REQUIRED)
+find_package(demo_buffer_backend_msgs REQUIRED)
 find_package(rcutils REQUIRED)
 
 # Build the demo backend plugin library
@@ -29,12 +30,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
-# Link against the FastRTPS registration library
-# Force the linker to keep the library even without explicit symbol references
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  -Wl,--no-as-needed
-  demo_buffer_backend_msgs::demo_buffer_backend_msgs_fastrtps_registration
-  -Wl,--as-needed
+  demo_buffer_backend_msgs::demo_buffer_backend_msgs__rosidl_typesupport_fastrtps_cpp
   rcl_buffer_backend::rcl_buffer_backend
   rosidl_runtime_cpp::rosidl_runtime_cpp
   rcl_buffer_backend_registry::rcl_buffer_backend_registry
@@ -76,6 +73,7 @@ ament_export_dependencies(
   rcl_buffer_backend_registry
   pluginlib
   demo_buffer
+  demo_buffer_backend_msgs
   rcutils
 )
 

@@ -76,9 +76,6 @@ public:
     const rmw_topic_endpoint_info_t & endpoint_info,
     const std::vector<rmw_topic_endpoint_info_t> & existing_endpoints,
     const std::unordered_map<std::string, std::string> & endpoint_supported_backends) override;
-
-  /// Provide the FastRTPS registration function
-  void * get_descriptor_registration_function() const override;
 };
 
 }  // namespace demo_buffer_backend
