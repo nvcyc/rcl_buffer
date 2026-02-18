@@ -7,6 +7,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -91,6 +92,16 @@ else()
   message(STATUS "demo_buffer NOT found - skipping demo backend nodes")
 endif()
 
+# Install Python package for rclpy test nodes
+ament_python_install_package(test_rcl_buffer)
+
+# Install Python entry point scripts
+install(PROGRAMS
+  scripts/rclpy_image_publisher
+  scripts/rclpy_image_subscriber
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)
@@ -101,13 +112,59 @@ if(BUILD_TESTING)
   if(demo_buffer_backend_FOUND)
     find_package(launch_testing_ament_cmake REQUIRED)
 
-    # 1 publisher to 1 subscriber tests
+    # C++ publisher/subscriber: 1 pub to 1 sub tests
     add_launch_test(test/test_1pub_1sub_cpu_to_cpu.py
       TARGET test_1pub_1sub_cpu_to_cpu
       TIMEOUT 30
     )
     add_launch_test(test/test_1pub_1sub_demo_to_demo.py
       TARGET test_1pub_1sub_demo_to_demo
+      TIMEOUT 30
+    )
+
+    # rclpy publisher/subscriber: 1 pub to 1 sub tests
+    add_launch_test(test/test_rclpy_1pub_1sub_cpu_to_cpu.py
+      TARGET test_rclpy_1pub_1sub_cpu_to_cpu
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclpy_1pub_1sub_demo_to_demo.py
+      TARGET test_rclpy_1pub_1sub_demo_to_demo
+      TIMEOUT 30
+    )
+
+    # Cross-language (rclcpp <-> rclpy) tests
+    add_launch_test(test/test_rclcpp_pub_cpu_rclpy_sub_cpu.py
+      TARGET test_rclcpp_pub_cpu_rclpy_sub_cpu
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclpy_pub_cpu_rclcpp_sub_cpu.py
+      TARGET test_rclpy_pub_cpu_rclcpp_sub_cpu
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclcpp_pub_demo_rclpy_sub_demo.py
+      TARGET test_rclcpp_pub_demo_rclpy_sub_demo
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclpy_pub_demo_rclcpp_sub_demo.py
+      TARGET test_rclpy_pub_demo_rclcpp_sub_demo
+      TIMEOUT 30
+    )
+
+    # Cross-language 1 pub to 2 subs (rclcpp + rclpy) tests
+    add_launch_test(test/test_rclcpp_pub_cpu_rclcpp_sub_rclpy_sub_cpu.py
+      TARGET test_rclcpp_pub_cpu_rclcpp_sub_rclpy_sub_cpu
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclpy_pub_cpu_rclcpp_sub_rclpy_sub_cpu.py
+      TARGET test_rclpy_pub_cpu_rclcpp_sub_rclpy_sub_cpu
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclcpp_pub_demo_rclcpp_sub_rclpy_sub_demo.py
+      TARGET test_rclcpp_pub_demo_rclcpp_sub_rclpy_sub_demo
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclpy_pub_demo_rclcpp_sub_rclpy_sub_demo.py
+      TARGET test_rclpy_pub_demo_rclcpp_sub_rclpy_sub_demo
       TIMEOUT 30
     )
   endif()

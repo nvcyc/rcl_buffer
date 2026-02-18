@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>demo_buffer_py</name>
+  <version>0.1.0</version>
+  <description>
+    Python bindings for the demo buffer backend, providing a DemoBuffer
+    factory that creates rcl_buffer.Buffer objects backed by DemoBufferImpl.
+  </description>
+
+  <maintainer email="cyc@nvidia.com">CY Chen</maintainer>
+
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
+  <depend>rcl_buffer</depend>
+  <depend>rcl_buffer_py</depend>
+  <depend>demo_buffer</depend>
+  <depend>rmw</depend>
+
+  <build_depend>pybind11</build_depend>
+  <build_depend>python3-dev</build_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

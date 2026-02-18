@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Launch test: 1 publisher to 1 subscriber, Demo backend to Demo backend
+# Launch test: 1 rclpy publisher to 1 rclpy subscriber, CPU backend to CPU backend.
+# Validates that the existing array.array('B') path works end-to-end with rclpy
+# and that sensor_msgs/Image messages are delivered correctly.
 
 import os
 import time
@@ -35,15 +37,15 @@ from std_msgs.msg import Bool, UInt32
 @pytest.mark.launch_test
 @launch_testing.markers.keep_alive
 def generate_test_description():
-    """Generate launch description for Demo-to-Demo pub/sub test."""
+    """Generate launch description for rclpy CPU-to-CPU pub/sub test."""
     publisher_node = Node(
         package='test_rcl_buffer',
-        executable='demo_backend_image_publisher_node',
-        name='demo_image_publisher',
+        executable='rclpy_image_publisher',
+        name='rclpy_cpu_publisher',
         output='screen',
         parameters=[{
-            'backend_mode': 'demo',
-            'topic_name': 'test_image',
+            'backend_mode': 'cpu',
+            'topic_name': 'test_rclpy_image',
             'publish_rate_ms': 200,
             'max_publish_count': 5,
         }],
@@ -51,13 +53,12 @@ def generate_test_description():
 
     subscriber_node = Node(
         package='test_rcl_buffer',
-        executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber',
+        executable='rclpy_image_subscriber',
+        name='rclpy_cpu_subscriber',
         output='screen',
         parameters=[{
-            'topic_name': 'test_image',
-            # Accept demo (intra-process zero-copy) or cpu (inter-process fallback)
-            'expected_backends': 'demo',
+            'topic_name': 'test_rclpy_image',
+            'expected_backends': 'cpu',
             'count_topic_suffix': '',
         }],
     )
@@ -88,8 +89,8 @@ def generate_test_description():
     ])
 
 
-class TestDemoToDemo(unittest.TestCase):
-    """Test case for Demo-to-Demo image pub/sub."""
+class TestRclpyCpuToCpu(unittest.TestCase):
+    """Test case for rclpy CPU-to-CPU image pub/sub."""
 
     @classmethod
     def setUpClass(cls):
@@ -100,7 +101,7 @@ class TestDemoToDemo(unittest.TestCase):
         rclpy.shutdown()
 
     def setUp(self):
-        self.node = rclpy.create_node('test_demo_to_demo')
+        self.node = rclpy.create_node('test_rclpy_cpu_to_cpu')
         self.publisher_count = 0
         self.subscriber_count = 0
         self.validation_passed = True
@@ -130,8 +131,8 @@ class TestDemoToDemo(unittest.TestCase):
             rclpy.spin_once(self.node, timeout_sec=0.1)
         return self.subscriber_count >= target_count
 
-    def test_demo_to_demo_messages_delivered(self):
-        """Test Demo backend publisher to Demo backend subscriber."""
+    def test_rclpy_cpu_to_cpu_messages_delivered(self):
+        """Test rclpy CPU backend publisher to CPU backend subscriber."""
         success = self._spin_until(target_count=1, timeout_sec=15.0)
 
         self.assertTrue(
@@ -146,8 +147,8 @@ class TestDemoToDemo(unittest.TestCase):
 
 
 @launch_testing.post_shutdown_test()
-class TestDemoToDemoShutdown(unittest.TestCase):
-    """Test shutdown behavior for Demo to Demo communication."""
+class TestRclpyCpuToCpuShutdown(unittest.TestCase):
+    """Test shutdown behavior for rclpy CPU to CPU communication."""
 
     def test_exit_codes(self, proc_info):
         launch_testing.asserts.assertExitCodes(proc_info)

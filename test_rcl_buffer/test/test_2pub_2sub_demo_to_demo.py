@@ -59,7 +59,7 @@ def generate_test_description():
         output='screen',
         parameters=[{
             'topic_name': 'topic1_image',
-            'expected_backends': 'demo,cpu',
+            'expected_backends': 'demo',
             'count_topic_prefix': 'topic1',
             'count_topic_suffix': '_a',
         }],
@@ -72,7 +72,7 @@ def generate_test_description():
         output='screen',
         parameters=[{
             'topic_name': 'topic1_image',
-            'expected_backends': 'demo,cpu',
+            'expected_backends': 'demo',
             'count_topic_prefix': 'topic1',
             'count_topic_suffix': '_b',
         }],
@@ -100,7 +100,7 @@ def generate_test_description():
         output='screen',
         parameters=[{
             'topic_name': 'topic2_image',
-            'expected_backends': 'demo,cpu',
+            'expected_backends': 'demo',
             'count_topic_prefix': 'topic2',
             'count_topic_suffix': '_a',
         }],
@@ -113,7 +113,7 @@ def generate_test_description():
         output='screen',
         parameters=[{
             'topic_name': 'topic2_image',
-            'expected_backends': 'demo,cpu',
+            'expected_backends': 'demo',
             'count_topic_prefix': 'topic2',
             'count_topic_suffix': '_b',
         }],

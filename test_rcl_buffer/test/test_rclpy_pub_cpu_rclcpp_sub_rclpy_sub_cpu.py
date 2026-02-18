@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Launch test: 1 publisher to 2 subscribers, Demo backend to Demo backend
+# Launch test: 1 rclpy publisher (CPU) to 1 rclcpp subscriber + 1 rclpy subscriber (CPU).
+# Validates that a single Python publisher can deliver CPU-backed image data
+# to both a C++ and a Python subscriber simultaneously.
 
 import os
 import time
@@ -35,41 +37,41 @@ from std_msgs.msg import Bool, UInt32
 @pytest.mark.launch_test
 @launch_testing.markers.keep_alive
 def generate_test_description():
-    """Generate launch description for Demo-to-Demo pub/sub test with 2 subscribers."""
+    """Launch rclpy CPU pub with rclcpp + rclpy CPU subscribers."""
     publisher_node = Node(
         package='test_rcl_buffer',
-        executable='demo_backend_image_publisher_node',
-        name='demo_image_publisher',
+        executable='rclpy_image_publisher',
+        name='rclpy_cpu_publisher',
         output='screen',
         parameters=[{
-            'backend_mode': 'demo',
-            'topic_name': 'test_image',
+            'backend_mode': 'cpu',
+            'topic_name': 'test_mixed_cpu_image',
             'publish_rate_ms': 200,
             'max_publish_count': 5,
         }],
     )
 
-    subscriber_node_1 = Node(
+    rclcpp_subscriber = Node(
         package='test_rcl_buffer',
         executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber_1',
+        name='rclcpp_cpu_subscriber',
         output='screen',
         parameters=[{
-            'topic_name': 'test_image',
-            'expected_backends': 'demo',
-            'count_topic_suffix': '_1',
+            'topic_name': 'test_mixed_cpu_image',
+            'expected_backends': 'cpu',
+            'count_topic_suffix': '_cpp',
         }],
     )
 
-    subscriber_node_2 = Node(
+    rclpy_subscriber = Node(
         package='test_rcl_buffer',
-        executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber_2',
+        executable='rclpy_image_subscriber',
+        name='rclpy_cpu_subscriber',
         output='screen',
         parameters=[{
-            'topic_name': 'test_image',
-            'expected_backends': 'demo',
-            'count_topic_suffix': '_2',
+            'topic_name': 'test_mixed_cpu_image',
+            'expected_backends': 'cpu',
+            'count_topic_suffix': '_py',
         }],
     )
 
@@ -90,8 +92,8 @@ def generate_test_description():
                 on_start=[
                     TimerAction(period=1.0, actions=[
                         publisher_node,
-                        subscriber_node_1,
-                        subscriber_node_2,
+                        rclcpp_subscriber,
+                        rclpy_subscriber,
                         launch_testing.actions.ReadyToTest(),
                     ]),
                 ],
@@ -100,8 +102,8 @@ def generate_test_description():
     ])
 
 
-class TestDemoToDemo2Sub(unittest.TestCase):
-    """Test case for Demo-to-Demo image pub/sub with 2 subscribers."""
+class TestRclpyPubCpuMixedSub(unittest.TestCase):
+    """Test rclpy CPU pub to rclcpp + rclpy CPU subscribers."""
 
     @classmethod
     def setUpClass(cls):
@@ -112,23 +114,27 @@ class TestDemoToDemo2Sub(unittest.TestCase):
         rclpy.shutdown()
 
     def setUp(self):
-        self.node = rclpy.create_node('test_demo_to_demo_2sub')
+        self.node = rclpy.create_node('test_rclpy_pub_cpu_mixed_sub')
         self.publisher_count = 0
-        self.subscriber_counts = {'_1': 0, '_2': 0}
-        self.validation_results = {'_1': True, '_2': True}
+        self.subscriber_counts = {'_cpp': 0, '_py': 0}
+        self.validation_results = {'_cpp': True, '_py': True}
 
         self.pub_count_sub = self.node.create_subscription(
             UInt32, 'publisher_count', self._pub_count_cb, 10)
 
-        self.sub_count_1 = self.node.create_subscription(
-            UInt32, 'subscriber_count_1', lambda msg: self._sub_count_cb(msg, '_1'), 10)
-        self.sub_count_2 = self.node.create_subscription(
-            UInt32, 'subscriber_count_2', lambda msg: self._sub_count_cb(msg, '_2'), 10)
+        self.sub_count_cpp = self.node.create_subscription(
+            UInt32, 'subscriber_count_cpp',
+            lambda msg: self._sub_count_cb(msg, '_cpp'), 10)
+        self.sub_count_py = self.node.create_subscription(
+            UInt32, 'subscriber_count_py',
+            lambda msg: self._sub_count_cb(msg, '_py'), 10)
 
-        self.val_1 = self.node.create_subscription(
-            Bool, 'validation_result_1', lambda msg: self._validation_cb(msg, '_1'), 10)
-        self.val_2 = self.node.create_subscription(
-            Bool, 'validation_result_2', lambda msg: self._validation_cb(msg, '_2'), 10)
+        self.val_cpp = self.node.create_subscription(
+            Bool, 'validation_result_cpp',
+            lambda msg: self._validation_cb(msg, '_cpp'), 10)
+        self.val_py = self.node.create_subscription(
+            Bool, 'validation_result_py',
+            lambda msg: self._validation_cb(msg, '_py'), 10)
 
     def tearDown(self):
         self.node.destroy_node()
@@ -154,28 +160,27 @@ class TestDemoToDemo2Sub(unittest.TestCase):
             rclpy.spin_once(self.node, timeout_sec=0.1)
         return self._get_min_sub_count() >= target_count
 
-    def test_demo_to_demo_2sub_messages_delivered(self):
-        """Test Demo backend publisher to 2 Demo backend subscribers."""
+    def test_messages_delivered(self):
+        """Test rclpy CPU pub delivers to both rclcpp and rclpy subscribers."""
         success = self._spin_until(target_count=1, timeout_sec=15.0)
 
         min_count = self._get_min_sub_count()
         self.assertTrue(
             success,
             f'Failed to receive at least 1 message on all subscribers. '
-            f'Min received: {min_count}')
+            f'Counts: {self.subscriber_counts}')
         self.assertGreaterEqual(
             min_count, 1,
             f'All subscribers should have received at least 1 message. '
             f'Counts: {self.subscriber_counts}')
         self.assertTrue(
             self._all_validations_passed(),
-            f'Image validation failed on one or more subscribers: '
-            f'{self.validation_results}')
+            f'Validation failed: {self.validation_results}')
 
 
 @launch_testing.post_shutdown_test()
-class TestDemoToDemo2SubShutdown(unittest.TestCase):
-    """Test shutdown behavior for Demo to Demo with 2 subscribers."""
+class TestRclpyPubCpuMixedSubShutdown(unittest.TestCase):
+    """Test shutdown behavior."""
 
     def test_exit_codes(self, proc_info):
         launch_testing.asserts.assertExitCodes(proc_info)

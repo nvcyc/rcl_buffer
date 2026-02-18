@@ -12,7 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Launch test: 1 publisher to 2 subscribers, Demo backend to Demo backend
+# Launch test: 1 rclcpp publisher (demo backend) to 1 rclpy subscriber (demo backend).
+# Validates cross-language interop for vendor-backed Buffer data:
+# - C++ publisher creates a Buffer with DemoBufferImpl backend
+# - C++ typesupport serializes via serialize_buffer_with_endpoint (demo descriptor)
+# - RMW transmits via Zenoh
+# - C typesupport deserializes into a Buffer with sentinel on the C struct
+# - convert_to_py wraps the sentinel Buffer* into a Python rcl_buffer.Buffer
+# - Python subscriber receives the Buffer object with backend_type == 'demo'
 
 import os
 import time
@@ -35,41 +42,29 @@ from std_msgs.msg import Bool, UInt32
 @pytest.mark.launch_test
 @launch_testing.markers.keep_alive
 def generate_test_description():
-    """Generate launch description for Demo-to-Demo pub/sub test with 2 subscribers."""
+    """Generate launch description for rclcpp demo pub to rclpy demo sub test."""
     publisher_node = Node(
         package='test_rcl_buffer',
         executable='demo_backend_image_publisher_node',
-        name='demo_image_publisher',
+        name='rclcpp_demo_publisher',
         output='screen',
         parameters=[{
             'backend_mode': 'demo',
-            'topic_name': 'test_image',
+            'topic_name': 'test_cross_lang_demo_image',
             'publish_rate_ms': 200,
             'max_publish_count': 5,
         }],
     )
 
-    subscriber_node_1 = Node(
+    subscriber_node = Node(
         package='test_rcl_buffer',
-        executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber_1',
+        executable='rclpy_image_subscriber',
+        name='rclpy_demo_subscriber',
         output='screen',
         parameters=[{
-            'topic_name': 'test_image',
+            'topic_name': 'test_cross_lang_demo_image',
             'expected_backends': 'demo',
-            'count_topic_suffix': '_1',
-        }],
-    )
-
-    subscriber_node_2 = Node(
-        package='test_rcl_buffer',
-        executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber_2',
-        output='screen',
-        parameters=[{
-            'topic_name': 'test_image',
-            'expected_backends': 'demo',
-            'count_topic_suffix': '_2',
+            'count_topic_suffix': '',
         }],
     )
 
@@ -90,8 +85,7 @@ def generate_test_description():
                 on_start=[
                     TimerAction(period=1.0, actions=[
                         publisher_node,
-                        subscriber_node_1,
-                        subscriber_node_2,
+                        subscriber_node,
                         launch_testing.actions.ReadyToTest(),
                     ]),
                 ],
@@ -100,8 +94,8 @@ def generate_test_description():
     ])
 
 
-class TestDemoToDemo2Sub(unittest.TestCase):
-    """Test case for Demo-to-Demo image pub/sub with 2 subscribers."""
+class TestRclcppPubDemoRclpySubDemo(unittest.TestCase):
+    """Test case for rclcpp demo publisher to rclpy demo subscriber."""
 
     @classmethod
     def setUpClass(cls):
@@ -112,23 +106,17 @@ class TestDemoToDemo2Sub(unittest.TestCase):
         rclpy.shutdown()
 
     def setUp(self):
-        self.node = rclpy.create_node('test_demo_to_demo_2sub')
+        self.node = rclpy.create_node('test_rclcpp_pub_demo_rclpy_sub_demo')
         self.publisher_count = 0
-        self.subscriber_counts = {'_1': 0, '_2': 0}
-        self.validation_results = {'_1': True, '_2': True}
+        self.subscriber_count = 0
+        self.validation_passed = True
 
         self.pub_count_sub = self.node.create_subscription(
             UInt32, 'publisher_count', self._pub_count_cb, 10)
-
-        self.sub_count_1 = self.node.create_subscription(
-            UInt32, 'subscriber_count_1', lambda msg: self._sub_count_cb(msg, '_1'), 10)
-        self.sub_count_2 = self.node.create_subscription(
-            UInt32, 'subscriber_count_2', lambda msg: self._sub_count_cb(msg, '_2'), 10)
-
-        self.val_1 = self.node.create_subscription(
-            Bool, 'validation_result_1', lambda msg: self._validation_cb(msg, '_1'), 10)
-        self.val_2 = self.node.create_subscription(
-            Bool, 'validation_result_2', lambda msg: self._validation_cb(msg, '_2'), 10)
+        self.sub_count_sub = self.node.create_subscription(
+            UInt32, 'subscriber_count', self._sub_count_cb, 10)
+        self.validation_sub = self.node.create_subscription(
+            Bool, 'validation_result', self._validation_cb, 10)
 
     def tearDown(self):
         self.node.destroy_node()
@@ -136,46 +124,36 @@ class TestDemoToDemo2Sub(unittest.TestCase):
     def _pub_count_cb(self, msg):
         self.publisher_count = msg.data
 
-    def _sub_count_cb(self, msg, suffix):
-        self.subscriber_counts[suffix] = msg.data
+    def _sub_count_cb(self, msg):
+        self.subscriber_count = msg.data
 
-    def _validation_cb(self, msg, suffix):
-        self.validation_results[suffix] = msg.data
-
-    def _get_min_sub_count(self):
-        return min(self.subscriber_counts.values())
-
-    def _all_validations_passed(self):
-        return all(self.validation_results.values())
+    def _validation_cb(self, msg):
+        self.validation_passed = msg.data
 
     def _spin_until(self, target_count=1, timeout_sec=15.0):
         start = time.time()
-        while self._get_min_sub_count() < target_count and time.time() - start < timeout_sec:
+        while self.subscriber_count < target_count and time.time() - start < timeout_sec:
             rclpy.spin_once(self.node, timeout_sec=0.1)
-        return self._get_min_sub_count() >= target_count
+        return self.subscriber_count >= target_count
 
-    def test_demo_to_demo_2sub_messages_delivered(self):
-        """Test Demo backend publisher to 2 Demo backend subscribers."""
+    def test_rclcpp_pub_demo_rclpy_sub_demo_messages_delivered(self):
+        """Test rclcpp demo publisher to rclpy demo subscriber."""
         success = self._spin_until(target_count=1, timeout_sec=15.0)
 
-        min_count = self._get_min_sub_count()
         self.assertTrue(
             success,
-            f'Failed to receive at least 1 message on all subscribers. '
-            f'Min received: {min_count}')
+            f'Failed to receive at least 1 message. '
+            f'Received: {self.subscriber_count}')
         self.assertGreaterEqual(
-            min_count, 1,
-            f'All subscribers should have received at least 1 message. '
-            f'Counts: {self.subscriber_counts}')
-        self.assertTrue(
-            self._all_validations_passed(),
-            f'Image validation failed on one or more subscribers: '
-            f'{self.validation_results}')
+            self.subscriber_count, 1,
+            f'Subscriber should have received at least 1 message. '
+            f'Received: {self.subscriber_count}')
+        self.assertTrue(self.validation_passed, 'Image validation failed')
 
 
 @launch_testing.post_shutdown_test()
-class TestDemoToDemo2SubShutdown(unittest.TestCase):
-    """Test shutdown behavior for Demo to Demo with 2 subscribers."""
+class TestRclcppPubDemoRclpySubDemoShutdown(unittest.TestCase):
+    """Test shutdown behavior."""
 
     def test_exit_codes(self, proc_info):
         launch_testing.asserts.assertExitCodes(proc_info)
