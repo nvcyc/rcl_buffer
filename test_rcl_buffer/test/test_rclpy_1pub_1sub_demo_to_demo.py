@@ -13,9 +13,9 @@
 # limitations under the License.
 #
 # Launch test: 1 rclpy publisher to 1 rclpy subscriber, demo backend to demo backend.
-# Validates that the Buffer sentinel path works end-to-end:
+# Validates that the Buffer is_rcl_buffer path works end-to-end:
 # - Python publisher creates a DemoBuffer (backend_type="demo")
-# - convert_from_py sets the sentinel on the C message
+# - convert_from_py sets is_rcl_buffer on the C message
 # - C typesupport serialize_with_endpoint uses buffer_serialization.hpp
 # - RMW transmits via Zenoh
 # - C typesupport deserialize_with_endpoint reconstructs the Buffer
@@ -96,7 +96,7 @@ def generate_test_description():
 
 
 class TestRclpyDemoToDemo(unittest.TestCase):
-    """Test case for rclpy demo-to-demo image pub/sub via Buffer sentinel."""
+    """Test case for rclpy demo-to-demo image pub/sub via Buffer is_rcl_buffer flag."""
 
     @classmethod
     def setUpClass(cls):

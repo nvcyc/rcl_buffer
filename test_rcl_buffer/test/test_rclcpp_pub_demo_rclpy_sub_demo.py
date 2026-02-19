@@ -17,8 +17,8 @@
 # - C++ publisher creates a Buffer with DemoBufferImpl backend
 # - C++ typesupport serializes via serialize_buffer_with_endpoint (demo descriptor)
 # - RMW transmits via Zenoh
-# - C typesupport deserializes into a Buffer with sentinel on the C struct
-# - convert_to_py wraps the sentinel Buffer* into a Python rcl_buffer.Buffer
+# - C typesupport deserializes into a Buffer (is_rcl_buffer flag on the C struct)
+# - convert_to_py wraps the Buffer* into a Python rcl_buffer.Buffer
 # - Python subscriber receives the Buffer object with backend_type == 'demo'
 
 import os

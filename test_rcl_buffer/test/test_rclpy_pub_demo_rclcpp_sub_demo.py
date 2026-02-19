@@ -15,7 +15,7 @@
 # Launch test: 1 rclpy publisher (demo backend) to 1 rclcpp subscriber (demo backend).
 # Validates cross-language interop for vendor-backed Buffer data:
 # - Python publisher creates a DemoBuffer (backend_type="demo")
-# - convert_from_py sets the sentinel on the C message struct
+# - convert_from_py sets is_rcl_buffer on the C message struct
 # - C typesupport serializes via serialize_buffer_with_endpoint (demo descriptor)
 # - RMW transmits via Zenoh
 # - C++ typesupport deserializes into a Buffer with DemoBufferImpl backend
