@@ -99,14 +99,23 @@ ament_python_install_package(test_rcl_buffer)
 install(PROGRAMS
   scripts/rclpy_image_publisher
   scripts/rclpy_image_subscriber
+  scripts/rclpy_legacy_image_publisher
+  scripts/rclpy_legacy_image_subscriber
   DESTINATION lib/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+  find_package(ament_cmake_pytest REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  # Unit test for Buffer <-> array.array backward compatibility (no ROS nodes needed)
+  ament_add_pytest_test(test_buffer_array_compat
+    test/test_buffer_array_compat.py
+    TIMEOUT 30
+  )
 
   # Launch tests for buffer backend (need demo_buffer_backend plugin installed for RMW)
   if(demo_buffer_backend_FOUND)
@@ -165,6 +174,22 @@ if(BUILD_TESTING)
     )
     add_launch_test(test/test_rclpy_pub_demo_rclcpp_sub_rclpy_sub_demo.py
       TARGET test_rclpy_pub_demo_rclcpp_sub_rclpy_sub_demo
+      TIMEOUT 30
+    )
+
+    # Demo publisher to legacy array.array subscriber (backward-compat)
+    add_launch_test(test/test_rclpy_demo_pub_legacy_array_sub.py
+      TARGET test_rclpy_demo_pub_legacy_array_sub
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclcpp_demo_pub_rclpy_legacy_array_sub.py
+      TARGET test_rclcpp_demo_pub_rclpy_legacy_array_sub
+      TIMEOUT 30
+    )
+
+    # Legacy array.array publisher to demo-aware subscriber (backward-compat)
+    add_launch_test(test/test_rclpy_legacy_array_pub_demo_sub.py
+      TARGET test_rclpy_legacy_array_pub_demo_sub
       TIMEOUT 30
     )
   endif()

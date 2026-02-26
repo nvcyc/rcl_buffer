@@ -66,7 +66,7 @@ def DemoBuffer(data=None, *, size=None):
     1024
 
     """
-    from rcl_buffer._rcl_buffer_py import _take_buffer_from_ptr
+    from rcl_buffer import _take_buffer_from_ptr
 
     if data is not None:
         if not isinstance(data, (bytes, bytearray)):
