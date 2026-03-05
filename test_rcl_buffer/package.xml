@@ -21,6 +21,8 @@
   <depend>demo_buffer_backend</depend>
 
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>rcl_interfaces</exec_depend>
+  <exec_depend>test_msgs</exec_depend>
   <exec_depend>rcl_buffer_py</exec_depend>
   <exec_depend>demo_buffer_py</exec_depend>
 
@@ -32,6 +34,8 @@
   <test_depend>launch_testing</test_depend>
   <test_depend>launch_testing_ros</test_depend>
   <test_depend>launch_testing_ament_cmake</test_depend>
+  <test_depend>rcl_interfaces</test_depend>
+  <test_depend>test_msgs</test_depend>
   <test_depend>rmw_zenoh_cpp</test_depend>
   <test_depend>rmw_fastrtps_cpp</test_depend>
 

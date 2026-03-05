@@ -101,6 +101,10 @@ install(PROGRAMS
   scripts/rclpy_image_subscriber
   scripts/rclpy_legacy_image_publisher
   scripts/rclpy_legacy_image_subscriber
+  scripts/rclpy_parameter_types_service
+  scripts/rclpy_parameter_types_client
+  scripts/rclpy_fibonacci_action_server
+  scripts/rclpy_fibonacci_action_client
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -191,6 +195,21 @@ if(BUILD_TESTING)
     add_launch_test(test/test_rclpy_legacy_array_pub_demo_sub.py
       TARGET test_rclpy_legacy_array_pub_demo_sub
       TIMEOUT 30
+    )
+
+    # Service / action route tests (rclpy)
+    add_launch_test(test/test_rclpy_service_cpu_fastrtps.py
+      TARGET test_rclpy_service_cpu_fastrtps
+      TIMEOUT 45
+    )
+    # TODO: Re-enable when full demo-buffer service response path is stable in this test scope.
+    # add_launch_test(test/test_rclpy_service_demo_fastrtps.py
+    #   TARGET test_rclpy_service_demo_fastrtps
+    #   TIMEOUT 45
+    # )
+    add_launch_test(test/test_rclpy_action_fastrtps.py
+      TARGET test_rclpy_action_fastrtps
+      TIMEOUT 45
     )
 
     # CycloneDDS tests: CPU backend pub/sub
