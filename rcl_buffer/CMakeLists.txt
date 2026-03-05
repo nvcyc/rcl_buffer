@@ -15,15 +15,16 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rmw REQUIRED)
 
-# This is a header-only library
-add_library(${PROJECT_NAME} INTERFACE)
+add_library(${PROJECT_NAME}
+  src/c_helpers.cpp
+)
 
-target_include_directories(${PROJECT_NAME} INTERFACE
+target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
-target_link_libraries(${PROJECT_NAME} INTERFACE
+target_link_libraries(${PROJECT_NAME} PUBLIC
   rmw::rmw
 )
 
@@ -37,6 +38,9 @@ install(
 install(
   TARGETS ${PROJECT_NAME}
   EXPORT ${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
   INCLUDES DESTINATION include/${PROJECT_NAME}
 )
 

@@ -172,65 +172,65 @@ public:
   /// Access element at position (CPU only)
   reference operator[](size_t pos)
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage()[pos];
   }
 
   const_reference operator[](size_t pos) const
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage()[pos];
   }
 
   /// Access element with bounds checking (CPU only)
   reference at(size_t pos)
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().at(pos);
   }
 
   const_reference at(size_t pos) const
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().at(pos);
   }
 
   /// Access first element (CPU only)
   reference front()
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().front();
   }
 
   const_reference front() const
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().front();
   }
 
   /// Access last element (CPU only)
   reference back()
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().back();
   }
 
   const_reference back() const
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().back();
   }
 
   /// Get pointer to data (CPU only)
   pointer data()
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().data();
   }
 
   const_pointer data() const
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().data();
   }
 
@@ -238,37 +238,37 @@ public:
 
   iterator begin()
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().data();
   }
 
   const_iterator begin() const
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().data();
   }
 
   const_iterator cbegin() const
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().data();
   }
 
   iterator end()
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().data() + size();
   }
 
   const_iterator end() const
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().data() + size();
   }
 
   const_iterator cend() const
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().data() + size();
   }
 
@@ -280,19 +280,19 @@ public:
 
   void reserve(size_t new_cap)
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     get_cpu_impl()->get_storage().reserve(new_cap);
   }
 
   size_t capacity() const
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage().capacity();
   }
 
   void shrink_to_fit()
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     get_cpu_impl()->get_storage().shrink_to_fit();
   }
 
@@ -315,32 +315,32 @@ public:
       impl_ = std::make_unique<CpuBufferImpl<T>>();
       backend_type_ = "cpu";
     }
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     get_cpu_impl()->get_storage().resize(n, value);
   }
 
   void push_back(const T & value)
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     get_cpu_impl()->get_storage().push_back(value);
   }
 
   void push_back(T && value)
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     get_cpu_impl()->get_storage().push_back(std::move(value));
   }
 
   void pop_back()
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     get_cpu_impl()->get_storage().pop_back();
   }
 
   template<typename ... Args>
   void emplace_back(Args && ... args)
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     get_cpu_impl()->get_storage().emplace_back(std::forward<Args>(args)...);
   }
 
@@ -351,13 +351,13 @@ public:
   /// @throws std::runtime_error if backend is not CPU.
   operator std::vector<T> &()
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage();
   }
 
   operator const std::vector<T> &() const
   {
-    check_cpu_backend();
+    throw_if_not_cpu_backend();
     return get_cpu_impl()->get_storage();
   }
 
@@ -398,13 +398,9 @@ public:
   /// for read-only access
   const BufferImplBase<T> * get_impl() const {return impl_.get();}
 
-private:
-  std::string backend_type_;  ///< Backend identifier ("cpu", "cuda", etc.)
-  /// Unique pointer for proper ownership and value semantics
-  std::unique_ptr<BufferImplBase<T>> impl_;
-
-  /// Throw exception if not CPU backend
-  void check_cpu_backend() const
+  /// Throw exception if not CPU backend.
+  /// @throws std::runtime_error if backend is not CPU.
+  void throw_if_not_cpu_backend() const
   {
     if (backend_type_ != "cpu") {
       throw std::runtime_error(
@@ -413,7 +409,12 @@ private:
     }
   }
 
-  /// Get CPU implementation (assumes check_cpu_backend() was called)
+private:
+  std::string backend_type_;  ///< Backend identifier ("cpu", "cuda", etc.)
+  /// Unique pointer for proper ownership and value semantics
+  std::unique_ptr<BufferImplBase<T>> impl_;
+
+  /// Get CPU implementation (assumes throw_if_not_cpu_backend() was called)
   CpuBufferImpl<T> * get_cpu_impl() const
   {
     return static_cast<CpuBufferImpl<T> *>(impl_.get());

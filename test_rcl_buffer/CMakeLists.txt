@@ -192,6 +192,20 @@ if(BUILD_TESTING)
       TARGET test_rclpy_legacy_array_pub_demo_sub
       TIMEOUT 30
     )
+
+    # CycloneDDS tests: CPU backend pub/sub
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_cyclonedds.py
+      TARGET test_1pub_1sub_cpu_to_cpu_cyclonedds
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_2sub_cpu_to_cpu_cyclonedds.py
+      TARGET test_1pub_2sub_cpu_to_cpu_cyclonedds
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_cyclonedds.py
+      TARGET test_1pub_1sub_demo_to_cpu_cyclonedds
+      TIMEOUT 30
+    )
   endif()
 endif()
 
