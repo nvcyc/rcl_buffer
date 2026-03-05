@@ -166,12 +166,12 @@ class TestCpuToCpu2Pub2Sub(unittest.TestCase):
         # Track topic1
         self.topic1_pub_count = 0
         self.topic1_sub_counts = {'_a': 0, '_b': 0}
-        self.topic1_validations = {'_a': True, '_b': True}
+        self.topic1_validations = {'_a': None, '_b': None}
 
         # Track topic2
         self.topic2_pub_count = 0
         self.topic2_sub_counts = {'_a': 0, '_b': 0}
-        self.topic2_validations = {'_a': True, '_b': True}
+        self.topic2_validations = {'_a': None, '_b': None}
 
         # Topic 1 subscriptions
         self.node.create_subscription(
@@ -218,12 +218,20 @@ class TestCpuToCpu2Pub2Sub(unittest.TestCase):
         return min(all_counts) if all_counts else 0
 
     def _all_validations_passed(self):
-        return (all(self.topic1_validations.values()) and
-                all(self.topic2_validations.values()))
+        return (all(v is True for v in self.topic1_validations.values()) and
+                all(v is True for v in self.topic2_validations.values()))
+
+    def _any_validation_pending(self):
+        return (any(v is None for v in self.topic1_validations.values()) or
+                any(v is None for v in self.topic2_validations.values()))
 
     def _spin_until(self, target_count=1, timeout_sec=20.0):
         start = time.time()
-        while self._get_min_count() < target_count and time.time() - start < timeout_sec:
+        while (
+            (self._get_min_count() < target_count
+             or self._any_validation_pending())
+            and time.time() - start < timeout_sec
+        ):
             rclpy.spin_once(self.node, timeout_sec=0.1)
         return self._get_min_count() >= target_count
 

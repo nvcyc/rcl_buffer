@@ -206,6 +206,39 @@ if(BUILD_TESTING)
       TARGET test_1pub_1sub_demo_to_cpu_cyclonedds
       TIMEOUT 30
     )
+
+    # FastRTPS tests: buffer-aware pub/sub over rmw_fastrtps_cpp
+    # Higher timeouts than Zenoh/CycloneDDS because DDS discovery + per-endpoint
+    # DataWriter/DataReader creation adds latency before messages can flow.
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_fastrtps.py
+      TARGET test_1pub_1sub_cpu_to_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_demo_fastrtps.py
+      TARGET test_1pub_1sub_demo_to_demo_fastrtps
+      TIMEOUT 45
+    )
+    # TODO: demo_to_cpu requires further RMW changes for mixed-backend support
+    # add_launch_test(test/test_1pub_1sub_demo_to_cpu_fastrtps.py
+    #   TARGET test_1pub_1sub_demo_to_cpu_fastrtps
+    #   TIMEOUT 45
+    # )
+    add_launch_test(test/test_1pub_2sub_cpu_to_cpu_fastrtps.py
+      TARGET test_1pub_2sub_cpu_to_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_1pub_2sub_demo_to_demo_fastrtps.py
+      TARGET test_1pub_2sub_demo_to_demo_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_2pub_2sub_cpu_to_cpu_fastrtps.py
+      TARGET test_2pub_2sub_cpu_to_cpu_fastrtps
+      TIMEOUT 60
+    )
+    add_launch_test(test/test_2pub_2sub_demo_to_demo_fastrtps.py
+      TARGET test_2pub_2sub_demo_to_demo_fastrtps
+      TIMEOUT 60
+    )
   endif()
 endif()
 

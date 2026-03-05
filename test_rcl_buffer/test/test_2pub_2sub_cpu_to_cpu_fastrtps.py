@@ -12,18 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Launch test: 2 publishers on different topics, each with 2 subscribers
-# All using Demo backend
+# Launch test: 2 publishers on different topics, each with 2 subscribers (FastRTPS)
+# All using CPU backend. Tests full mesh of per-subscriber DataWriters.
 
-import os
 import time
 import unittest
 
-from ament_index_python.packages import get_package_prefix
 from launch import LaunchDescription
-from launch.actions import (
-    ExecuteProcess, RegisterEventHandler, SetEnvironmentVariable, TimerAction)
-from launch.event_handlers import OnProcessStart
+from launch.actions import SetEnvironmentVariable
 from launch_ros.actions import Node
 import launch_testing
 import launch_testing.actions
@@ -36,30 +32,29 @@ from std_msgs.msg import Bool, UInt32
 @pytest.mark.launch_test
 @launch_testing.markers.keep_alive
 def generate_test_description():
-    """Generate launch description for 2 pub / 2 sub per topic, Demo-to-Demo test."""
-    # Topic 1: Publisher with 2 subscribers
+    """Generate launch description for 2 pub / 2 sub per topic, CPU-to-CPU over FastRTPS."""
     publisher_1 = Node(
         package='test_rcl_buffer',
         executable='demo_backend_image_publisher_node',
-        name='demo_image_publisher_1',
+        name='cpu_image_publisher_1',
         output='screen',
         parameters=[{
-            'backend_mode': 'demo',
+            'backend_mode': 'cpu',
             'topic_name': 'topic1_image',
             'publish_rate_ms': 200,
             'count_topic_prefix': 'topic1',
-            'max_publish_count': 5,
+            'max_publish_count': 50,
         }],
     )
 
     subscriber_1a = Node(
         package='test_rcl_buffer',
         executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber_1a',
+        name='cpu_image_subscriber_1a',
         output='screen',
         parameters=[{
             'topic_name': 'topic1_image',
-            'expected_backends': 'demo',
+            'expected_backends': 'cpu',
             'count_topic_prefix': 'topic1',
             'count_topic_suffix': '_a',
         }],
@@ -68,39 +63,38 @@ def generate_test_description():
     subscriber_1b = Node(
         package='test_rcl_buffer',
         executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber_1b',
+        name='cpu_image_subscriber_1b',
         output='screen',
         parameters=[{
             'topic_name': 'topic1_image',
-            'expected_backends': 'demo',
+            'expected_backends': 'cpu',
             'count_topic_prefix': 'topic1',
             'count_topic_suffix': '_b',
         }],
     )
 
-    # Topic 2: Publisher with 2 subscribers
     publisher_2 = Node(
         package='test_rcl_buffer',
         executable='demo_backend_image_publisher_node',
-        name='demo_image_publisher_2',
+        name='cpu_image_publisher_2',
         output='screen',
         parameters=[{
-            'backend_mode': 'demo',
+            'backend_mode': 'cpu',
             'topic_name': 'topic2_image',
             'publish_rate_ms': 200,
             'count_topic_prefix': 'topic2',
-            'max_publish_count': 5,
+            'max_publish_count': 50,
         }],
     )
 
     subscriber_2a = Node(
         package='test_rcl_buffer',
         executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber_2a',
+        name='cpu_image_subscriber_2a',
         output='screen',
         parameters=[{
             'topic_name': 'topic2_image',
-            'expected_backends': 'demo',
+            'expected_backends': 'cpu',
             'count_topic_prefix': 'topic2',
             'count_topic_suffix': '_a',
         }],
@@ -109,48 +103,30 @@ def generate_test_description():
     subscriber_2b = Node(
         package='test_rcl_buffer',
         executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber_2b',
+        name='cpu_image_subscriber_2b',
         output='screen',
         parameters=[{
             'topic_name': 'topic2_image',
-            'expected_backends': 'demo',
+            'expected_backends': 'cpu',
             'count_topic_prefix': 'topic2',
             'count_topic_suffix': '_b',
         }],
     )
 
-    rmw_zenohd = os.path.join(
-        get_package_prefix('rmw_zenoh_cpp'), 'lib', 'rmw_zenoh_cpp', 'rmw_zenohd')
-    zenoh_router = ExecuteProcess(
-        cmd=[rmw_zenohd],
-        name='zenoh_router',
-        output='screen',
-    )
-
     return LaunchDescription([
-        SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_zenoh_cpp'),
-        zenoh_router,
-        RegisterEventHandler(
-            OnProcessStart(
-                target_action=zenoh_router,
-                on_start=[
-                    TimerAction(period=1.0, actions=[
-                        publisher_1,
-                        subscriber_1a,
-                        subscriber_1b,
-                        publisher_2,
-                        subscriber_2a,
-                        subscriber_2b,
-                        launch_testing.actions.ReadyToTest(),
-                    ]),
-                ],
-            ),
-        ),
+        SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_fastrtps_cpp'),
+        publisher_1,
+        subscriber_1a,
+        subscriber_1b,
+        publisher_2,
+        subscriber_2a,
+        subscriber_2b,
+        launch_testing.actions.ReadyToTest(),
     ])
 
 
-class TestDemoToDemo2Pub2Sub(unittest.TestCase):
-    """Test case for 2 pub / 2 sub per topic, Demo-to-Demo."""
+class TestCpuToCpu2Pub2SubFastRTPS(unittest.TestCase):
+    """Test case for 2 pub / 2 sub per topic, CPU-to-CPU over FastRTPS."""
 
     @classmethod
     def setUpClass(cls):
@@ -161,19 +137,16 @@ class TestDemoToDemo2Pub2Sub(unittest.TestCase):
         rclpy.shutdown()
 
     def setUp(self):
-        self.node = rclpy.create_node('test_demo_to_demo_2pub_2sub')
+        self.node = rclpy.create_node('test_cpu_to_cpu_2pub_2sub_fastrtps')
 
-        # Track topic1
         self.topic1_pub_count = 0
         self.topic1_sub_counts = {'_a': 0, '_b': 0}
         self.topic1_validations = {'_a': None, '_b': None}
 
-        # Track topic2
         self.topic2_pub_count = 0
         self.topic2_sub_counts = {'_a': 0, '_b': 0}
         self.topic2_validations = {'_a': None, '_b': None}
 
-        # Topic 1 subscriptions
         self.node.create_subscription(
             UInt32, 'topic1_publisher_count',
             lambda msg: setattr(self, 'topic1_pub_count', msg.data), 10)
@@ -190,7 +163,6 @@ class TestDemoToDemo2Pub2Sub(unittest.TestCase):
             Bool, 'topic1_validation_result_b',
             lambda msg: self._update_dict(self.topic1_validations, '_b', msg.data), 10)
 
-        # Topic 2 subscriptions
         self.node.create_subscription(
             UInt32, 'topic2_publisher_count',
             lambda msg: setattr(self, 'topic2_pub_count', msg.data), 10)
@@ -235,8 +207,8 @@ class TestDemoToDemo2Pub2Sub(unittest.TestCase):
             rclpy.spin_once(self.node, timeout_sec=0.1)
         return self._get_min_count() >= target_count
 
-    def test_demo_to_demo_2pub_2sub_messages_delivered(self):
-        """Test 2 Demo publishers to 2 Demo subscribers each."""
+    def test_cpu_to_cpu_2pub_2sub_messages_delivered(self):
+        """Test 2 CPU publishers to 2 CPU subscribers each over FastRTPS."""
         success = self._spin_until(target_count=1, timeout_sec=20.0)
 
         min_count = self._get_min_count()
@@ -257,8 +229,8 @@ class TestDemoToDemo2Pub2Sub(unittest.TestCase):
 
 
 @launch_testing.post_shutdown_test()
-class TestDemoToDemo2Pub2SubShutdown(unittest.TestCase):
-    """Test shutdown behavior for Demo to Demo with 2 publishers and 2 subscribers."""
+class TestCpuToCpu2Pub2SubFastRTPSShutdown(unittest.TestCase):
+    """Test shutdown behavior for CPU to CPU with 2 pub / 2 sub over FastRTPS."""
 
     def test_exit_codes(self, proc_info):
         launch_testing.asserts.assertExitCodes(proc_info)

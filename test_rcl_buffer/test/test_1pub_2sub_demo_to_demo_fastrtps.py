@@ -12,17 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Launch test: 1 publisher to 2 subscribers, Demo backend to Demo backend
+# Launch test: 1 publisher to 2 subscribers, Demo backend to Demo backend (FastRTPS)
+# Tests buffer-aware per-subscriber DataWriter fan-out with demo backend.
 
-import os
 import time
 import unittest
 
-from ament_index_python.packages import get_package_prefix
 from launch import LaunchDescription
-from launch.actions import (
-    ExecuteProcess, RegisterEventHandler, SetEnvironmentVariable, TimerAction)
-from launch.event_handlers import OnProcessStart
+from launch.actions import SetEnvironmentVariable
 from launch_ros.actions import Node
 import launch_testing
 import launch_testing.actions
@@ -35,7 +32,7 @@ from std_msgs.msg import Bool, UInt32
 @pytest.mark.launch_test
 @launch_testing.markers.keep_alive
 def generate_test_description():
-    """Generate launch description for Demo-to-Demo pub/sub test with 2 subscribers."""
+    """Generate launch description for Demo-to-Demo pub/sub with 2 subs over FastRTPS."""
     publisher_node = Node(
         package='test_rcl_buffer',
         executable='demo_backend_image_publisher_node',
@@ -45,7 +42,7 @@ def generate_test_description():
             'backend_mode': 'demo',
             'topic_name': 'test_image',
             'publish_rate_ms': 200,
-            'max_publish_count': 5,
+            'max_publish_count': 50,
         }],
     )
 
@@ -73,35 +70,17 @@ def generate_test_description():
         }],
     )
 
-    rmw_zenohd = os.path.join(
-        get_package_prefix('rmw_zenoh_cpp'), 'lib', 'rmw_zenoh_cpp', 'rmw_zenohd')
-    zenoh_router = ExecuteProcess(
-        cmd=[rmw_zenohd],
-        name='zenoh_router',
-        output='screen',
-    )
-
     return LaunchDescription([
-        SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_zenoh_cpp'),
-        zenoh_router,
-        RegisterEventHandler(
-            OnProcessStart(
-                target_action=zenoh_router,
-                on_start=[
-                    TimerAction(period=1.0, actions=[
-                        publisher_node,
-                        subscriber_node_1,
-                        subscriber_node_2,
-                        launch_testing.actions.ReadyToTest(),
-                    ]),
-                ],
-            ),
-        ),
+        SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_fastrtps_cpp'),
+        publisher_node,
+        subscriber_node_1,
+        subscriber_node_2,
+        launch_testing.actions.ReadyToTest(),
     ])
 
 
-class TestDemoToDemo2Sub(unittest.TestCase):
-    """Test case for Demo-to-Demo image pub/sub with 2 subscribers."""
+class TestDemoToDemo2SubFastRTPS(unittest.TestCase):
+    """Test case for Demo-to-Demo image pub/sub with 2 subscribers over FastRTPS."""
 
     @classmethod
     def setUpClass(cls):
@@ -112,7 +91,7 @@ class TestDemoToDemo2Sub(unittest.TestCase):
         rclpy.shutdown()
 
     def setUp(self):
-        self.node = rclpy.create_node('test_demo_to_demo_2sub')
+        self.node = rclpy.create_node('test_demo_to_demo_2sub_fastrtps')
         self.publisher_count = 0
         self.subscriber_counts = {'_1': 0, '_2': 0}
         self.validation_results = {'_1': None, '_2': None}
@@ -162,7 +141,7 @@ class TestDemoToDemo2Sub(unittest.TestCase):
         return self._get_min_sub_count() >= target_count
 
     def test_demo_to_demo_2sub_messages_delivered(self):
-        """Test Demo backend publisher to 2 Demo backend subscribers."""
+        """Test Demo backend publisher to 2 Demo backend subscribers over FastRTPS."""
         success = self._spin_until(target_count=1, timeout_sec=15.0)
 
         min_count = self._get_min_sub_count()
@@ -181,8 +160,8 @@ class TestDemoToDemo2Sub(unittest.TestCase):
 
 
 @launch_testing.post_shutdown_test()
-class TestDemoToDemo2SubShutdown(unittest.TestCase):
-    """Test shutdown behavior for Demo to Demo with 2 subscribers."""
+class TestDemoToDemo2SubFastRTPSShutdown(unittest.TestCase):
+    """Test shutdown behavior for Demo to Demo with 2 subscribers over FastRTPS."""
 
     def test_exit_codes(self, proc_info):
         launch_testing.asserts.assertExitCodes(proc_info)

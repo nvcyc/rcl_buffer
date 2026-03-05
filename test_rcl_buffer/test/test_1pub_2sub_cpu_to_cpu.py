@@ -115,7 +115,7 @@ class TestCpuToCpu2Sub(unittest.TestCase):
         self.node = rclpy.create_node('test_cpu_to_cpu_2sub')
         self.publisher_count = 0
         self.subscriber_counts = {'_1': 0, '_2': 0}
-        self.validation_results = {'_1': True, '_2': True}
+        self.validation_results = {'_1': None, '_2': None}
 
         self.pub_count_sub = self.node.create_subscription(
             UInt32, 'publisher_count', self._pub_count_cb, 10)
@@ -148,9 +148,16 @@ class TestCpuToCpu2Sub(unittest.TestCase):
     def _all_validations_passed(self):
         return all(self.validation_results.values())
 
+    def _any_validation_pending(self):
+        return any(v is None for v in self.validation_results.values())
+
     def _spin_until(self, target_count=1, timeout_sec=15.0):
         start = time.time()
-        while self._get_min_sub_count() < target_count and time.time() - start < timeout_sec:
+        while (
+            (self._get_min_sub_count() < target_count
+             or self._any_validation_pending())
+            and time.time() - start < timeout_sec
+        ):
             rclpy.spin_once(self.node, timeout_sec=0.1)
         return self._get_min_sub_count() >= target_count
 

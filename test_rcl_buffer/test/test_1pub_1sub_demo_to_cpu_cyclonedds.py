@@ -80,7 +80,7 @@ class TestDemoToCpuCycloneDDS(unittest.TestCase):
         self.node = rclpy.create_node('test_demo_to_cpu_cyclonedds')
         self.publisher_count = 0
         self.subscriber_count = 0
-        self.validation_passed = True
+        self.validation_passed = None
 
         self.pub_count_sub = self.node.create_subscription(
             UInt32, 'publisher_count', self._pub_count_cb, 10)
@@ -103,7 +103,11 @@ class TestDemoToCpuCycloneDDS(unittest.TestCase):
 
     def _spin_until(self, target_count=1, timeout_sec=15.0):
         start = time.time()
-        while self.subscriber_count < target_count and time.time() - start < timeout_sec:
+        while (
+            (self.subscriber_count < target_count
+             or self.validation_passed is None)
+            and time.time() - start < timeout_sec
+        ):
             rclpy.spin_once(self.node, timeout_sec=0.1)
         return self.subscriber_count >= target_count
 
