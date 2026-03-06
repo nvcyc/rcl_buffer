@@ -15,14 +15,17 @@
 #ifndef DEMO_BUFFER_BACKEND__DEMO_BUFFER_BACKEND_HPP_
 #define DEMO_BUFFER_BACKEND__DEMO_BUFFER_BACKEND_HPP_
 
+#include <array>
 #include <cstring>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <unordered_map>
 #include <vector>
 
 #include "rcl_buffer_backend/buffer_backend.hpp"
 #include "demo_buffer/demo_buffer_impl.hpp"
+#include "rmw/types.h"
 
 namespace demo_buffer_backend
 {
@@ -57,7 +60,9 @@ public:
     return "demo_buffer_backend_msgs::msg::DemoBufferDescriptor";
   }
 
-  /// Create descriptor with endpoint awareness
+  /// Create descriptor with endpoint awareness.
+  /// Returns nullptr if the endpoint is not compatible with the demo backend,
+  /// signaling that the serialization layer should fall back to CPU.
   std::shared_ptr<void> create_descriptor_with_endpoint(
     const std::shared_ptr<void> & impl,
     const rmw_topic_endpoint_info_t & endpoint_info) const override;
@@ -76,6 +81,20 @@ public:
     const rmw_topic_endpoint_info_t & endpoint_info,
     const std::vector<rmw_topic_endpoint_info_t> & existing_endpoints,
     const std::unordered_map<std::string, std::string> & endpoint_supported_backends) override;
+
+private:
+  using GidKey = std::array<uint8_t, RMW_GID_STORAGE_SIZE>;
+  mutable std::mutex compat_mutex_;
+  std::unordered_map<std::size_t, bool> endpoint_compat_cache_;
+
+  static std::size_t gid_hash(const uint8_t * gid)
+  {
+    std::size_t h = 0;
+    for (size_t i = 0; i < RMW_GID_STORAGE_SIZE; ++i) {
+      h ^= std::hash<uint8_t>{}(gid[i]) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    }
+    return h;
+  }
 };
 
 }  // namespace demo_buffer_backend

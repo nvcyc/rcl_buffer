@@ -54,7 +54,6 @@ DemoBufferBackend::on_discovering_endpoint(
 {
   (void)existing_endpoints;
 
-  // Check if discovered endpoint supports demo backend
   bool supports_demo = endpoint_supported_backends.find("demo") !=
     endpoint_supported_backends.end();
 
@@ -69,8 +68,11 @@ DemoBufferBackend::on_discovering_endpoint(
       "Discovered endpoint does NOT support 'demo' backend");
   }
 
-  // Demo backend is always compatible with other demo backends
-  // No special grouping logic needed
+  {
+    std::lock_guard<std::mutex> lock(compat_mutex_);
+    endpoint_compat_cache_[gid_hash(endpoint_info.endpoint_gid)] = supports_demo;
+  }
+
   return {supports_demo, {}};
 }
 
@@ -79,11 +81,16 @@ std::shared_ptr<void> DemoBufferBackend::create_descriptor_with_endpoint(
   const std::shared_ptr<void> & impl,
   const rmw_topic_endpoint_info_t & endpoint_info) const
 {
-  (void)endpoint_info;  // Demo backend doesn't use endpoint info for descriptor
+  {
+    std::lock_guard<std::mutex> lock(compat_mutex_);
+    auto it = endpoint_compat_cache_.find(gid_hash(endpoint_info.endpoint_gid));
+    if (it != endpoint_compat_cache_.end() && !it->second) {
+      return nullptr;
+    }
+  }
 
   auto demo_impl = std::static_pointer_cast<DemoBufferImpl<uint8_t>>(impl);
 
-  // Create descriptor using the impl's create_descriptor method
   rmw_gid_t dummy_gid;
   std::memset(&dummy_gid, 0, sizeof(dummy_gid));
 

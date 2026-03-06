@@ -57,7 +57,10 @@ public:
   /// Create a descriptor message with endpoint awareness.
   /// @param impl Type-erased BufferImplBase pointer.
   /// @param endpoint_info Endpoint info for the peer.
-  /// @return Type-erased descriptor message.
+  /// @return Type-erased descriptor message, or nullptr if the backend cannot
+  ///         handle this endpoint (e.g., the peer does not support this backend).
+  ///         Returning nullptr signals the serialization layer to fall back to
+  ///         CPU-based std::vector serialization.
   virtual std::shared_ptr<void> create_descriptor_with_endpoint(
     const std::shared_ptr<void> & impl,
     const rmw_topic_endpoint_info_t & endpoint_info) const = 0;
