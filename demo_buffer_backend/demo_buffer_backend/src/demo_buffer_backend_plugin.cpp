@@ -18,7 +18,7 @@
 #include <rcutils/logging_macros.h>
 
 #include "demo_buffer_backend_msgs/msg/demo_buffer_descriptor.hpp"
-#include "rcl_buffer_backend/register_buffer_descriptor.hpp"
+#include "rosidl_buffer_backend/register_buffer_descriptor.hpp"
 
 namespace demo_buffer_backend
 {
@@ -30,7 +30,7 @@ DemoBufferBackend::DemoBufferBackend()
 
   // Register FastCDR descriptor serializers automatically using the
   // rosidl-generated type support for DemoBufferDescriptor.
-  rcl_buffer::register_buffer_descriptor<
+  rosidl::register_buffer_descriptor<
     demo_buffer_backend_msgs::msg::DemoBufferDescriptor>(get_backend_type());
 }
 
@@ -118,4 +118,4 @@ std::shared_ptr<void> DemoBufferBackend::from_descriptor_with_endpoint(
 // Export the DemoBufferBackend as a pluginlib plugin
 PLUGINLIB_EXPORT_CLASS(
   demo_buffer_backend::DemoBufferBackend,
-  rcl_buffer::BufferBackend)
+  rosidl::BufferBackend)

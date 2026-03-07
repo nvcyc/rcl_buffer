@@ -15,7 +15,7 @@
 """
 demo_buffer - Python bindings for the demo buffer backend.
 
-Provides a DemoBuffer factory that creates rcl_buffer.Buffer objects
+Provides a DemoBuffer factory that creates rosidl_buffer.Buffer objects
 backed by DemoBufferImpl (the demo/reference buffer backend).
 
 Example usage:
@@ -38,7 +38,7 @@ from demo_buffer._demo_buffer_py import (
 
 def DemoBuffer(data=None, *, size=None):
     """
-    Create an rcl_buffer.Buffer backed by the demo buffer backend.
+    Create an rosidl_buffer.Buffer backed by the demo buffer backend.
 
     Parameters
     ----------
@@ -50,7 +50,7 @@ def DemoBuffer(data=None, *, size=None):
 
     Returns
     -------
-    rcl_buffer.Buffer
+    rosidl_buffer.Buffer
         A Buffer object with backend_type == 'demo'.
 
     Examples
@@ -66,7 +66,7 @@ def DemoBuffer(data=None, *, size=None):
     1024
 
     """
-    from rcl_buffer import _take_buffer_from_ptr
+    from rosidl_buffer import _take_buffer_from_ptr
 
     if data is not None:
         if not isinstance(data, (bytes, bytearray)):

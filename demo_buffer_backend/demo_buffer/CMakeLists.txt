@@ -12,7 +12,7 @@ endif()
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(rcl_buffer REQUIRED)
+find_package(rosidl_buffer REQUIRED)
 find_package(demo_buffer_backend_msgs REQUIRED)
 find_package(rmw REQUIRED)
 find_package(rcutils REQUIRED)
@@ -26,7 +26,7 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 )
 
 target_link_libraries(${PROJECT_NAME} INTERFACE
-  rcl_buffer::rcl_buffer
+  rosidl_buffer::rosidl_buffer
   rmw::rmw
   rcutils::rcutils
   ${demo_buffer_backend_msgs_TARGETS}
@@ -47,7 +47,7 @@ install(
 
 # Export
 ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
-ament_export_dependencies(rcl_buffer demo_buffer_backend_msgs rmw rcutils)
+ament_export_dependencies(rosidl_buffer demo_buffer_backend_msgs rmw rcutils)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

@@ -13,7 +13,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
-find_package(rcl_buffer REQUIRED)
+find_package(rosidl_buffer REQUIRED)
 find_package(demo_buffer REQUIRED)
 find_package(rmw REQUIRED)
 
@@ -27,7 +27,7 @@ pybind11_add_module(_demo_buffer_py
 )
 
 target_link_libraries(_demo_buffer_py PRIVATE
-  rcl_buffer::rcl_buffer
+  rosidl_buffer::rosidl_buffer
   demo_buffer::demo_buffer
   rmw::rmw
 )

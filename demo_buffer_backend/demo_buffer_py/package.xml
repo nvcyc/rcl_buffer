@@ -5,7 +5,7 @@
   <version>0.1.0</version>
   <description>
     Python bindings for the demo buffer backend, providing a DemoBuffer
-    factory that creates rcl_buffer.Buffer objects backed by DemoBufferImpl.
+    factory that creates rosidl_buffer.Buffer objects backed by DemoBufferImpl.
   </description>
 
   <maintainer email="cyc@nvidia.com">CY Chen</maintainer>
@@ -15,8 +15,8 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
 
-  <depend>rcl_buffer</depend>
-  <depend>rcl_buffer_py</depend>
+  <depend>rosidl_buffer</depend>
+  <depend>rosidl_buffer_py</depend>
   <depend>demo_buffer</depend>
   <depend>rmw</depend>
 

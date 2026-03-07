@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RCL_BUFFER_TEST_BACKEND__VISIBILITY_CONTROL_H_
-#define RCL_BUFFER_TEST_BACKEND__VISIBILITY_CONTROL_H_
+#ifndef ROSIDL_BUFFER_TEST_BACKEND__VISIBILITY_CONTROL_H_
+#define ROSIDL_BUFFER_TEST_BACKEND__VISIBILITY_CONTROL_H_
 
 #ifdef __cplusplus
 extern "C"
@@ -25,34 +25,34 @@ extern "C"
 
 #if defined _WIN32 || defined __CYGWIN__
   #ifdef __GNUC__
-    #define RCL_BUFFER_TEST_BACKEND_EXPORT __attribute__ ((dllexport))
-    #define RCL_BUFFER_TEST_BACKEND_IMPORT __attribute__ ((dllimport))
+    #define ROSIDL_BUFFER_TEST_BACKEND_EXPORT __attribute__ ((dllexport))
+    #define ROSIDL_BUFFER_TEST_BACKEND_IMPORT __attribute__ ((dllimport))
   #else
-    #define RCL_BUFFER_TEST_BACKEND_EXPORT __declspec(dllexport)
-    #define RCL_BUFFER_TEST_BACKEND_IMPORT __declspec(dllimport)
+    #define ROSIDL_BUFFER_TEST_BACKEND_EXPORT __declspec(dllexport)
+    #define ROSIDL_BUFFER_TEST_BACKEND_IMPORT __declspec(dllimport)
   #endif
-  #ifdef RCL_BUFFER_TEST_BACKEND_BUILDING_DLL
-    #define RCL_BUFFER_TEST_BACKEND_PUBLIC RCL_BUFFER_TEST_BACKEND_EXPORT
+  #ifdef ROSIDL_BUFFER_TEST_BACKEND_BUILDING_DLL
+    #define ROSIDL_BUFFER_TEST_BACKEND_PUBLIC ROSIDL_BUFFER_TEST_BACKEND_EXPORT
   #else
-    #define RCL_BUFFER_TEST_BACKEND_PUBLIC RCL_BUFFER_TEST_BACKEND_IMPORT
+    #define ROSIDL_BUFFER_TEST_BACKEND_PUBLIC ROSIDL_BUFFER_TEST_BACKEND_IMPORT
   #endif
-  #define RCL_BUFFER_TEST_BACKEND_PUBLIC_TYPE RCL_BUFFER_TEST_BACKEND_PUBLIC
-  #define RCL_BUFFER_TEST_BACKEND_LOCAL
+  #define ROSIDL_BUFFER_TEST_BACKEND_PUBLIC_TYPE ROSIDL_BUFFER_TEST_BACKEND_PUBLIC
+  #define ROSIDL_BUFFER_TEST_BACKEND_LOCAL
 #else
-  #define RCL_BUFFER_TEST_BACKEND_EXPORT __attribute__ ((visibility("default")))
-  #define RCL_BUFFER_TEST_BACKEND_IMPORT
+  #define ROSIDL_BUFFER_TEST_BACKEND_EXPORT __attribute__ ((visibility("default")))
+  #define ROSIDL_BUFFER_TEST_BACKEND_IMPORT
   #if __GNUC__ >= 4
-    #define RCL_BUFFER_TEST_BACKEND_PUBLIC __attribute__ ((visibility("default")))
-    #define RCL_BUFFER_TEST_BACKEND_LOCAL  __attribute__ ((visibility("hidden")))
+    #define ROSIDL_BUFFER_TEST_BACKEND_PUBLIC __attribute__ ((visibility("default")))
+    #define ROSIDL_BUFFER_TEST_BACKEND_LOCAL  __attribute__ ((visibility("hidden")))
   #else
-    #define RCL_BUFFER_TEST_BACKEND_PUBLIC
-    #define RCL_BUFFER_TEST_BACKEND_LOCAL
+    #define ROSIDL_BUFFER_TEST_BACKEND_PUBLIC
+    #define ROSIDL_BUFFER_TEST_BACKEND_LOCAL
   #endif
-  #define RCL_BUFFER_TEST_BACKEND_PUBLIC_TYPE
+  #define ROSIDL_BUFFER_TEST_BACKEND_PUBLIC_TYPE
 #endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // RCL_BUFFER_TEST_BACKEND__VISIBILITY_CONTROL_H_
+#endif  // ROSIDL_BUFFER_TEST_BACKEND__VISIBILITY_CONTROL_H_
