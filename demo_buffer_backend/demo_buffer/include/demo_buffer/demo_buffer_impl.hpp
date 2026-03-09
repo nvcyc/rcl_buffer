@@ -87,41 +87,27 @@ public:
   /// Get const reference to underlying std::vector.
   const std::vector<T> & get_storage() const {return storage_;}
 
-  // ========== BufferImplBase interface implementation ==========
+  // ========== BufferImplBase overrides ==========
 
   size_t size() const override {return storage_.size();}
 
-  void resize(size_t n) override
-  {
-    storage_.resize(n);
-  }
-
-  void clear() override
-  {
-    storage_.clear();
-  }
-
-  const void * get_backend_handle() const override
-  {
-    return storage_.empty() ? nullptr : storage_.data();
-  }
-
   std::unique_ptr<rosidl::BufferImplBase<T>> to_cpu() const override
   {
-    // DemoBufferImpl stores data on CPU, so just copy to CpuBufferImpl
     auto cpu = std::make_unique<rosidl::CpuBufferImpl<T>>();
     cpu->get_storage() = storage_;
     return cpu;
   }
 
-  // ========== Descriptor-based Serialization Interface ==========
-
-  std::string get_descriptor_type_name() const override
+  std::unique_ptr<rosidl::BufferImplBase<T>> clone() const override
   {
-    return "demo_buffer_backend_msgs/msg/DemoBufferDescriptor";
+    auto copy = std::make_unique<DemoBufferImpl<T>>();
+    copy->storage_ = storage_;
+    return copy;
   }
 
-  std::shared_ptr<void> create_descriptor(const rmw_gid_t & subscriber_gid) const override
+  // ========== Descriptor Serialization (used by DemoBufferBackend plugin) ==========
+
+  std::shared_ptr<void> create_descriptor(const rmw_gid_t & subscriber_gid) const
   {
     (void)subscriber_gid;  // Not used for demo backend
 
@@ -164,7 +150,7 @@ public:
 
   std::unique_ptr<rosidl::BufferImplBase<T>> from_descriptor(
     const std::shared_ptr<void> & descriptor_ptr,
-    const rmw_gid_t & publisher_gid) const override
+    const rmw_gid_t & publisher_gid) const
   {
     (void)publisher_gid;  // Not used for demo backend
 
@@ -212,13 +198,6 @@ public:
     }
 
     return impl;
-  }
-
-  std::unique_ptr<rosidl::BufferImplBase<T>> clone() const override
-  {
-    auto copy = std::make_unique<DemoBufferImpl<T>>();
-    copy->storage_ = storage_;  // Deep copy
-    return copy;
   }
 
 private:

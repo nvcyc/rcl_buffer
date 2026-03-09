@@ -19,6 +19,7 @@
 #include "demo_buffer/demo_buffer_impl.hpp"
 #include "demo_buffer_backend/demo_buffer_backend.hpp"
 #include "demo_buffer_backend_msgs/msg/demo_buffer_descriptor.hpp"
+#include "rosidl_buffer/cpu_buffer_impl.hpp"
 
 using demo_buffer_backend::DemoBufferImpl;
 using demo_buffer_backend::DemoBufferBackend;
@@ -37,25 +38,25 @@ TEST_F(DemoBufferImplTest, BasicOperations)
   DemoBufferImpl<uint8_t> buffer;
 
   // Test initial state
-  EXPECT_EQ(buffer.size(), 0u);
-  EXPECT_EQ(buffer.get_backend_handle(), nullptr);
+  EXPECT_EQ(buffer.get_storage().size(), 0u);
+  EXPECT_TRUE(buffer.get_storage().empty());
 
   // Test resize
-  buffer.resize(100);
-  EXPECT_EQ(buffer.size(), 100u);
-  EXPECT_NE(buffer.get_backend_handle(), nullptr);
+  buffer.get_storage().resize(100);
+  EXPECT_EQ(buffer.get_storage().size(), 100u);
+  EXPECT_NE(buffer.get_storage().data(), nullptr);
 
   // Test clear
-  buffer.clear();
-  EXPECT_EQ(buffer.size(), 0u);
+  buffer.get_storage().clear();
+  EXPECT_EQ(buffer.get_storage().size(), 0u);
 }
 
 // Test constructor with size
 TEST_F(DemoBufferImplTest, ConstructorWithSize)
 {
   DemoBufferImpl<uint8_t> buffer(256);
-  EXPECT_EQ(buffer.size(), 256u);
-  EXPECT_NE(buffer.get_backend_handle(), nullptr);
+  EXPECT_EQ(buffer.get_storage().size(), 256u);
+  EXPECT_NE(buffer.get_storage().data(), nullptr);
 }
 
 // Test constructor with vector
@@ -64,7 +65,7 @@ TEST_F(DemoBufferImplTest, ConstructorWithVector)
   std::vector<uint8_t> data = {1, 2, 3, 4, 5};
   DemoBufferImpl<uint8_t> buffer(data);
 
-  EXPECT_EQ(buffer.size(), 5u);
+  EXPECT_EQ(buffer.get_storage().size(), 5u);
   EXPECT_EQ(buffer.get_storage(), data);
 }
 
@@ -99,7 +100,7 @@ TEST_F(DemoBufferImplTest, DescriptorRoundTrip)
   }
 
   DemoBufferImpl<uint8_t> original(test_data);
-  EXPECT_EQ(original.size(), test_data.size());
+  EXPECT_EQ(original.get_storage().size(), test_data.size());
 
   // Create descriptor
   rmw_gid_t dummy_gid;
@@ -125,7 +126,7 @@ TEST_F(DemoBufferImplTest, DescriptorRoundTrip)
   ASSERT_NE(reconstructed, nullptr);
 
   // Verify reconstructed buffer matches original
-  EXPECT_EQ(reconstructed->size(), original.size());
+  EXPECT_EQ(reconstructed->get_storage().size(), original.get_storage().size());
   EXPECT_EQ(reconstructed->get_storage(), original.get_storage());
 }
 
@@ -137,7 +138,8 @@ TEST_F(DemoBufferImplTest, ToCpuConversion)
 
   auto cpu_buffer = buffer.to_cpu();
   ASSERT_NE(cpu_buffer, nullptr);
-  EXPECT_EQ(cpu_buffer->size(), test_data.size());
+  auto * cpu_impl = static_cast<rosidl::CpuBufferImpl<uint8_t> *>(cpu_buffer.get());
+  EXPECT_EQ(cpu_impl->get_storage().size(), test_data.size());
 }
 
 // Test clone
@@ -148,7 +150,9 @@ TEST_F(DemoBufferImplTest, Clone)
 
   auto cloned = original.clone();
   ASSERT_NE(cloned, nullptr);
-  EXPECT_EQ(cloned->size(), original.size());
+  auto * cloned_as_demo = dynamic_cast<DemoBufferImpl<uint8_t> *>(cloned.get());
+  ASSERT_NE(cloned_as_demo, nullptr);
+  EXPECT_EQ(cloned_as_demo->get_storage().size(), original.get_storage().size());
 
   // Verify it's a deep copy by modifying original
   original.get_storage()[0] = 0;
