@@ -54,12 +54,6 @@ public:
     return "version=1.0";
   }
 
-  /// Get descriptor message type name
-  std::string get_descriptor_type_name() const override
-  {
-    return "demo_buffer_backend_msgs::msg::DemoBufferDescriptor";
-  }
-
   /// Create descriptor with endpoint awareness.
   /// Returns nullptr if the endpoint is not compatible with the demo backend,
   /// signaling that the serialization layer should fall back to CPU.

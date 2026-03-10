@@ -185,14 +185,6 @@ TEST_F(DemoBufferBackendTest, BackendAuxInfo)
   EXPECT_EQ(backend_->get_backend_aux_info(), "version=1.0");
 }
 
-// Test descriptor type name
-TEST_F(DemoBufferBackendTest, DescriptorTypeName)
-{
-  EXPECT_EQ(
-    backend_->get_descriptor_type_name(),
-    "demo_buffer_backend_msgs::msg::DemoBufferDescriptor");
-}
-
 // Test create_descriptor_with_endpoint
 TEST_F(DemoBufferBackendTest, CreateDescriptorWithEndpoint)
 {
