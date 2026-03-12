@@ -12,14 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Launch test: 1 rclpy publisher (demo backend) to 1 rclcpp subscriber (demo backend).
-# Validates cross-language interop for vendor-backed Buffer data:
-# - Python publisher creates a DemoBuffer (backend_type="demo")
-# - convert_from_py sets is_rosidl_buffer on the C message struct
-# - C typesupport serializes via serialize_buffer_with_endpoint (demo descriptor)
-# - RMW transmits via Zenoh
-# - C++ typesupport deserializes into a Buffer with DemoBufferImpl backend
-# - C++ subscriber receives an rosidl::Buffer<uint8_t> with backend_type == "demo"
+# Launch test: 1 rclpy publisher to 1 rclpy subscriber, CPU backend to CPU backend.
+# Subscriber explicitly sets acceptable_buffer_backends="cpu"
 
 import os
 import time
@@ -42,15 +36,15 @@ from std_msgs.msg import Bool, UInt32
 @pytest.mark.launch_test
 @launch_testing.markers.keep_alive
 def generate_test_description():
-    """Generate launch description for rclpy demo pub to rclcpp demo sub test."""
+    """Generate launch description for rclpy CPU-to-CPU pub/sub test with explicit cpu."""
     publisher_node = Node(
         package='test_rosidl_buffer',
         executable='rclpy_image_publisher',
-        name='rclpy_demo_publisher',
+        name='rclpy_cpu_publisher',
         output='screen',
         parameters=[{
-            'backend_mode': 'demo',
-            'topic_name': 'test_cross_lang_demo_image',
+            'backend_mode': 'cpu',
+            'topic_name': 'test_rclpy_image',
             'publish_rate_ms': 200,
             'max_publish_count': 5,
         }],
@@ -58,13 +52,13 @@ def generate_test_description():
 
     subscriber_node = Node(
         package='test_rosidl_buffer',
-        executable='demo_backend_image_subscriber_node',
-        name='rclcpp_demo_subscriber',
+        executable='rclpy_image_subscriber',
+        name='rclpy_cpu_subscriber',
         output='screen',
         parameters=[{
-            'topic_name': 'test_cross_lang_demo_image',
-            'expected_backends': 'demo',
-            'acceptable_buffer_backends': 'any',
+            'topic_name': 'test_rclpy_image',
+            'expected_backends': 'cpu',
+            'acceptable_buffer_backends': 'cpu',
             'count_topic_suffix': '',
         }],
     )
@@ -95,8 +89,8 @@ def generate_test_description():
     ])
 
 
-class TestRclpyPubDemoRclcppSubDemo(unittest.TestCase):
-    """Test case for rclpy demo publisher to rclcpp demo subscriber."""
+class TestRclpyCpuToCpuExplicit(unittest.TestCase):
+    """Test case for rclpy CPU-to-CPU pub/sub with explicit cpu backend option."""
 
     @classmethod
     def setUpClass(cls):
@@ -107,7 +101,7 @@ class TestRclpyPubDemoRclcppSubDemo(unittest.TestCase):
         rclpy.shutdown()
 
     def setUp(self):
-        self.node = rclpy.create_node('test_rclpy_pub_demo_rclcpp_sub_demo')
+        self.node = rclpy.create_node('test_rclpy_cpu_to_cpu_explicit')
         self.publisher_count = 0
         self.subscriber_count = 0
         self.validation_passed = True
@@ -137,8 +131,8 @@ class TestRclpyPubDemoRclcppSubDemo(unittest.TestCase):
             rclpy.spin_once(self.node, timeout_sec=0.1)
         return self.subscriber_count >= target_count
 
-    def test_rclpy_pub_demo_rclcpp_sub_demo_messages_delivered(self):
-        """Test rclpy demo publisher to rclcpp demo subscriber."""
+    def test_rclpy_cpu_to_cpu_explicit_messages_delivered(self):
+        """Test rclpy CPU pub to CPU sub with explicit acceptable_buffer_backends='cpu'."""
         success = self._spin_until(target_count=1, timeout_sec=15.0)
 
         self.assertTrue(
@@ -153,8 +147,8 @@ class TestRclpyPubDemoRclcppSubDemo(unittest.TestCase):
 
 
 @launch_testing.post_shutdown_test()
-class TestRclpyPubDemoRclcppSubDemoShutdown(unittest.TestCase):
-    """Test shutdown behavior."""
+class TestRclpyCpuToCpuExplicitShutdown(unittest.TestCase):
+    """Test shutdown behavior for rclpy CPU to CPU with explicit cpu option."""
 
     def test_exit_codes(self, proc_info):
         launch_testing.asserts.assertExitCodes(proc_info)

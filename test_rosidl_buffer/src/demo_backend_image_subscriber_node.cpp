@@ -39,19 +39,27 @@ public:
     this->declare_parameter<std::string>("expected_backends", "demo,cpu");
     this->declare_parameter<std::string>("count_topic_suffix", "");
     this->declare_parameter<std::string>("count_topic_prefix", "");
+    this->declare_parameter<std::string>("acceptable_buffer_backends", "__default__");
 
     // Get parameters
     std::string topic_name = this->get_parameter("topic_name").as_string();
     expected_backends_str_ = this->get_parameter("expected_backends").as_string();
     std::string count_suffix = this->get_parameter("count_topic_suffix").as_string();
     std::string count_prefix = this->get_parameter("count_topic_prefix").as_string();
+    std::string acceptable_backends =
+      this->get_parameter("acceptable_buffer_backends").as_string();
 
     // Parse expected backends
     parse_expected_backends(expected_backends_str_);
 
+    rclcpp::SubscriptionOptions sub_options;
+    if (acceptable_backends != "__default__") {
+      sub_options.acceptable_buffer_backends = acceptable_backends;
+    }
     subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
       topic_name, 10,
-      std::bind(&DemoBackendImageSubscriber::image_callback, this, std::placeholders::_1));
+      std::bind(&DemoBackendImageSubscriber::image_callback, this, std::placeholders::_1),
+      sub_options);
 
     // Publishers for test results (with optional prefix and suffix for multiple test configurations)
     std::string count_topic = count_prefix.empty() ? "subscriber_count" :

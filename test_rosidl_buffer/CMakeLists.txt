@@ -212,6 +212,44 @@ if(BUILD_TESTING)
       TIMEOUT 45
     )
 
+    # acceptable_buffer_backends option tests: demo to demo with 'any' and 'demo'
+    add_launch_test(test/test_1pub_1sub_demo_to_demo_sub_any.py
+      TARGET test_1pub_1sub_demo_to_demo_sub_any
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_demo_sub_demo.py
+      TARGET test_1pub_1sub_demo_to_demo_sub_demo
+      TIMEOUT 30
+    )
+
+    # acceptable_buffer_backends option tests: cpu to cpu with '', 'cpu', and default
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_empty.py
+      TARGET test_1pub_1sub_cpu_to_cpu_sub_empty
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_cpu.py
+      TARGET test_1pub_1sub_cpu_to_cpu_sub_cpu
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_default.py
+      TARGET test_1pub_1sub_cpu_to_cpu_sub_default
+      TIMEOUT 30
+    )
+
+    # acceptable_buffer_backends option tests: demo to cpu with '', 'cpu', and default
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_empty.py
+      TARGET test_1pub_1sub_demo_to_cpu_sub_empty
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_cpu.py
+      TARGET test_1pub_1sub_demo_to_cpu_sub_cpu
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_default.py
+      TARGET test_1pub_1sub_demo_to_cpu_sub_default
+      TIMEOUT 30
+    )
+
     # CycloneDDS tests: CPU backend pub/sub
     add_launch_test(test/test_1pub_1sub_cpu_to_cpu_cyclonedds.py
       TARGET test_1pub_1sub_cpu_to_cpu_cyclonedds

@@ -12,17 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Launch test: 1 publisher to 1 subscriber, Demo backend to Demo backend
+# Launch test: demo pub to cpu sub with acceptable_buffer_backends="" (empty)
+# Verifies that empty string causes CPU fallback when publisher uses demo backend.
 
-import os
 import time
 import unittest
 
-from ament_index_python.packages import get_package_prefix
 from launch import LaunchDescription
-from launch.actions import (
-    ExecuteProcess, RegisterEventHandler, SetEnvironmentVariable, TimerAction)
-from launch.event_handlers import OnProcessStart
+from launch.actions import SetEnvironmentVariable
 from launch_ros.actions import Node
 import launch_testing
 import launch_testing.actions
@@ -35,7 +32,7 @@ from std_msgs.msg import Bool, UInt32
 @pytest.mark.launch_test
 @launch_testing.markers.keep_alive
 def generate_test_description():
-    """Generate launch description for Demo-to-Demo pub/sub test."""
+    """Demo pub to sub with acceptable_buffer_backends='' (empty string: CPU fallback)."""
     publisher_node = Node(
         package='test_rosidl_buffer',
         executable='demo_backend_image_publisher_node',
@@ -52,45 +49,26 @@ def generate_test_description():
     subscriber_node = Node(
         package='test_rosidl_buffer',
         executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber',
+        name='cpu_image_subscriber',
         output='screen',
         parameters=[{
             'topic_name': 'test_image',
-            # Accept demo (intra-process zero-copy) or cpu (inter-process fallback)
-            'expected_backends': 'demo',
-            'acceptable_buffer_backends': 'any',
+            'expected_backends': 'cpu',
+            'acceptable_buffer_backends': '',
             'count_topic_suffix': '',
         }],
     )
 
-    rmw_zenohd = os.path.join(
-        get_package_prefix('rmw_zenoh_cpp'), 'lib', 'rmw_zenoh_cpp', 'rmw_zenohd')
-    zenoh_router = ExecuteProcess(
-        cmd=[rmw_zenohd],
-        name='zenoh_router',
-        output='screen',
-    )
-
     return LaunchDescription([
-        SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_zenoh_cpp'),
-        zenoh_router,
-        RegisterEventHandler(
-            OnProcessStart(
-                target_action=zenoh_router,
-                on_start=[
-                    TimerAction(period=1.0, actions=[
-                        publisher_node,
-                        subscriber_node,
-                        launch_testing.actions.ReadyToTest(),
-                    ]),
-                ],
-            ),
-        ),
+        SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_cyclonedds_cpp'),
+        publisher_node,
+        subscriber_node,
+        launch_testing.actions.ReadyToTest(),
     ])
 
 
-class TestDemoToDemo(unittest.TestCase):
-    """Test case for Demo-to-Demo image pub/sub."""
+class TestDemoCpuSubEmpty(unittest.TestCase):
+    """Demo to CPU with acceptable_buffer_backends='' (empty string: CPU fallback)."""
 
     @classmethod
     def setUpClass(cls):
@@ -101,13 +79,10 @@ class TestDemoToDemo(unittest.TestCase):
         rclpy.shutdown()
 
     def setUp(self):
-        self.node = rclpy.create_node('test_demo_to_demo')
-        self.publisher_count = 0
+        self.node = rclpy.create_node('test_demo_cpu_sub_empty')
         self.subscriber_count = 0
         self.validation_passed = None
 
-        self.pub_count_sub = self.node.create_subscription(
-            UInt32, 'publisher_count', self._pub_count_cb, 10)
         self.sub_count_sub = self.node.create_subscription(
             UInt32, 'subscriber_count', self._sub_count_cb, 10)
         self.validation_sub = self.node.create_subscription(
@@ -115,9 +90,6 @@ class TestDemoToDemo(unittest.TestCase):
 
     def tearDown(self):
         self.node.destroy_node()
-
-    def _pub_count_cb(self, msg):
-        self.publisher_count = msg.data
 
     def _sub_count_cb(self, msg):
         self.subscriber_count = msg.data
@@ -135,24 +107,15 @@ class TestDemoToDemo(unittest.TestCase):
             rclpy.spin_once(self.node, timeout_sec=0.1)
         return self.subscriber_count >= target_count
 
-    def test_demo_to_demo_messages_delivered(self):
-        """Test Demo backend publisher to Demo backend subscriber."""
+    def test_demo_to_cpu_sub_empty(self):
+        """Demo pub to sub with '' should fall back to CPU data."""
         success = self._spin_until(target_count=1, timeout_sec=15.0)
-
-        self.assertTrue(
-            success,
-            f'Failed to receive at least 1 message. '
-            f'Received: {self.subscriber_count}')
-        self.assertGreaterEqual(
-            self.subscriber_count, 1,
-            f'Subscriber should have received at least 1 message. '
-            f'Received: {self.subscriber_count}')
+        self.assertTrue(success, f'Received: {self.subscriber_count}')
         self.assertTrue(self.validation_passed, 'Image validation failed')
 
 
 @launch_testing.post_shutdown_test()
-class TestDemoToDemoShutdown(unittest.TestCase):
-    """Test shutdown behavior for Demo to Demo communication."""
+class TestShutdown(unittest.TestCase):
 
     def test_exit_codes(self, proc_info):
         launch_testing.asserts.assertExitCodes(proc_info)

@@ -12,24 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Launch test: 1 rclpy publisher (demo backend) to 1 rclcpp subscriber (demo backend).
-# Validates cross-language interop for vendor-backed Buffer data:
-# - Python publisher creates a DemoBuffer (backend_type="demo")
-# - convert_from_py sets is_rosidl_buffer on the C message struct
-# - C typesupport serializes via serialize_buffer_with_endpoint (demo descriptor)
-# - RMW transmits via Zenoh
-# - C++ typesupport deserializes into a Buffer with DemoBufferImpl backend
-# - C++ subscriber receives an rosidl::Buffer<uint8_t> with backend_type == "demo"
+# Launch test: 1 publisher to 1 subscriber, CPU backend to CPU backend (FastRTPS)
+# Subscriber explicitly sets acceptable_buffer_backends="cpu"
 
-import os
 import time
 import unittest
 
-from ament_index_python.packages import get_package_prefix
 from launch import LaunchDescription
-from launch.actions import (
-    ExecuteProcess, RegisterEventHandler, SetEnvironmentVariable, TimerAction)
-from launch.event_handlers import OnProcessStart
+from launch.actions import SetEnvironmentVariable
 from launch_ros.actions import Node
 import launch_testing
 import launch_testing.actions
@@ -42,61 +32,43 @@ from std_msgs.msg import Bool, UInt32
 @pytest.mark.launch_test
 @launch_testing.markers.keep_alive
 def generate_test_description():
-    """Generate launch description for rclpy demo pub to rclcpp demo sub test."""
+    """Generate launch description for CPU-to-CPU test over FastRTPS with explicit cpu."""
     publisher_node = Node(
         package='test_rosidl_buffer',
-        executable='rclpy_image_publisher',
-        name='rclpy_demo_publisher',
+        executable='demo_backend_image_publisher_node',
+        name='cpu_image_publisher',
         output='screen',
         parameters=[{
-            'backend_mode': 'demo',
-            'topic_name': 'test_cross_lang_demo_image',
+            'backend_mode': 'cpu',
+            'topic_name': 'test_image',
             'publish_rate_ms': 200,
-            'max_publish_count': 5,
+            'max_publish_count': 50,
         }],
     )
 
     subscriber_node = Node(
         package='test_rosidl_buffer',
         executable='demo_backend_image_subscriber_node',
-        name='rclcpp_demo_subscriber',
+        name='cpu_image_subscriber',
         output='screen',
         parameters=[{
-            'topic_name': 'test_cross_lang_demo_image',
-            'expected_backends': 'demo',
-            'acceptable_buffer_backends': 'any',
+            'topic_name': 'test_image',
+            'expected_backends': 'cpu',
+            'acceptable_buffer_backends': 'cpu',
             'count_topic_suffix': '',
         }],
     )
 
-    rmw_zenohd = os.path.join(
-        get_package_prefix('rmw_zenoh_cpp'), 'lib', 'rmw_zenoh_cpp', 'rmw_zenohd')
-    zenoh_router = ExecuteProcess(
-        cmd=[rmw_zenohd],
-        name='zenoh_router',
-        output='screen',
-    )
-
     return LaunchDescription([
-        SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_zenoh_cpp'),
-        zenoh_router,
-        RegisterEventHandler(
-            OnProcessStart(
-                target_action=zenoh_router,
-                on_start=[
-                    TimerAction(period=1.0, actions=[
-                        publisher_node,
-                        subscriber_node,
-                        launch_testing.actions.ReadyToTest(),
-                    ]),
-                ],
-            ),
-        ),
+        SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_fastrtps_cpp'),
+        publisher_node,
+        subscriber_node,
+        launch_testing.actions.ReadyToTest(),
     ])
 
 
-class TestRclpyPubDemoRclcppSubDemo(unittest.TestCase):
-    """Test case for rclpy demo publisher to rclcpp demo subscriber."""
+class TestCpuToCpuExplicitFastRTPS(unittest.TestCase):
+    """Test case for CPU-to-CPU over FastRTPS with explicit cpu option."""
 
     @classmethod
     def setUpClass(cls):
@@ -107,10 +79,10 @@ class TestRclpyPubDemoRclcppSubDemo(unittest.TestCase):
         rclpy.shutdown()
 
     def setUp(self):
-        self.node = rclpy.create_node('test_rclpy_pub_demo_rclcpp_sub_demo')
+        self.node = rclpy.create_node('test_cpu_to_cpu_explicit_fastrtps')
         self.publisher_count = 0
         self.subscriber_count = 0
-        self.validation_passed = True
+        self.validation_passed = None
 
         self.pub_count_sub = self.node.create_subscription(
             UInt32, 'publisher_count', self._pub_count_cb, 10)
@@ -133,12 +105,16 @@ class TestRclpyPubDemoRclcppSubDemo(unittest.TestCase):
 
     def _spin_until(self, target_count=1, timeout_sec=15.0):
         start = time.time()
-        while self.subscriber_count < target_count and time.time() - start < timeout_sec:
+        while (
+            (self.subscriber_count < target_count
+             or self.validation_passed is None)
+            and time.time() - start < timeout_sec
+        ):
             rclpy.spin_once(self.node, timeout_sec=0.1)
         return self.subscriber_count >= target_count
 
-    def test_rclpy_pub_demo_rclcpp_sub_demo_messages_delivered(self):
-        """Test rclpy demo publisher to rclcpp demo subscriber."""
+    def test_cpu_to_cpu_explicit_messages_delivered(self):
+        """Test CPU pub to CPU sub over FastRTPS with explicit cpu option."""
         success = self._spin_until(target_count=1, timeout_sec=15.0)
 
         self.assertTrue(
@@ -153,8 +129,8 @@ class TestRclpyPubDemoRclcppSubDemo(unittest.TestCase):
 
 
 @launch_testing.post_shutdown_test()
-class TestRclpyPubDemoRclcppSubDemoShutdown(unittest.TestCase):
-    """Test shutdown behavior."""
+class TestCpuToCpuExplicitFastRTPSShutdown(unittest.TestCase):
+    """Test shutdown for CPU to CPU with explicit cpu option over FastRTPS."""
 
     def test_exit_codes(self, proc_info):
         launch_testing.asserts.assertExitCodes(proc_info)

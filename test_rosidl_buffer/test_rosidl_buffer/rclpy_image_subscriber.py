@@ -37,6 +37,7 @@ class RclpyImageSubscriber(Node):
         self.declare_parameter('topic_name', 'test_image')
         self.declare_parameter('expected_backends', 'cpu')
         self.declare_parameter('count_topic_suffix', '')
+        self.declare_parameter('acceptable_buffer_backends', '__default__')
 
         # Read parameters
         topic_name = self.get_parameter('topic_name').value
@@ -44,13 +45,18 @@ class RclpyImageSubscriber(Node):
             self.get_parameter('expected_backends').value.split(',')
         )
         count_suffix = self.get_parameter('count_topic_suffix').value
+        acceptable_backends = self.get_parameter(
+            'acceptable_buffer_backends').value
 
         self.received_count = 0
         self.validation_passed = True
 
-        # Create subscriber
+        # Create subscriber with configurable acceptable_buffer_backends
+        sub_kwargs = {}
+        if acceptable_backends != '__default__':
+            sub_kwargs['acceptable_buffer_backends'] = acceptable_backends
         self.subscription = self.create_subscription(
-            Image, topic_name, self.image_callback, 10)
+            Image, topic_name, self.image_callback, 10, **sub_kwargs)
 
         # Create status publishers
         count_topic = f'subscriber_count{count_suffix}'

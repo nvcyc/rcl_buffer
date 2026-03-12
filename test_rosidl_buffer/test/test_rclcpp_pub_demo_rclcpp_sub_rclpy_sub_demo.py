@@ -59,6 +59,7 @@ def generate_test_description():
         parameters=[{
             'topic_name': 'test_mixed_demo_image',
             'expected_backends': 'demo',
+            'acceptable_buffer_backends': 'any',
             'count_topic_suffix': '_cpp',
         }],
     )
@@ -71,6 +72,7 @@ def generate_test_description():
         parameters=[{
             'topic_name': 'test_mixed_demo_image',
             'expected_backends': 'demo',
+            'acceptable_buffer_backends': 'any',
             'count_topic_suffix': '_py',
         }],
     )
