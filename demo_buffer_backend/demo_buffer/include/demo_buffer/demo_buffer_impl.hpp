@@ -20,6 +20,7 @@
 #include <cstring>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <typeinfo>
 #include <vector>
 
@@ -88,6 +89,8 @@ public:
   const std::vector<T> & get_storage() const {return storage_;}
 
   // ========== BufferImplBase overrides ==========
+
+  std::string get_backend_type() const override {return "demo";}
 
   size_t size() const override {return storage_.size();}
 

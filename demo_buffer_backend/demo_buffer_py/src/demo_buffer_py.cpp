@@ -38,15 +38,10 @@ namespace py = pybind11;
 static rosidl::Buffer<uint8_t> * create_demo_buffer_from_bytes(
   const std::string & data)
 {
-  auto * buffer = new rosidl::Buffer<uint8_t>();
-
-  // Create DemoBufferImpl with the data
   std::vector<uint8_t> vec(data.begin(), data.end());
   auto demo_impl = std::make_unique<demo_buffer_backend::DemoBufferImpl<uint8_t>>(
     std::move(vec));
-  buffer->set_impl(std::move(demo_impl), "demo");
-
-  return buffer;
+  return new rosidl::Buffer<uint8_t>(std::move(demo_impl));
 }
 
 /// Create an rosidl::Buffer<uint8_t> backed by DemoBufferImpl of given size.
@@ -55,12 +50,8 @@ static rosidl::Buffer<uint8_t> * create_demo_buffer_from_bytes(
 /// @return A new heap-allocated Buffer backed by DemoBufferImpl
 static rosidl::Buffer<uint8_t> * create_demo_buffer_from_size(size_t size)
 {
-  auto * buffer = new rosidl::Buffer<uint8_t>();
-
   auto demo_impl = std::make_unique<demo_buffer_backend::DemoBufferImpl<uint8_t>>(size);
-  buffer->set_impl(std::move(demo_impl), "demo");
-
-  return buffer;
+  return new rosidl::Buffer<uint8_t>(std::move(demo_impl));
 }
 
 

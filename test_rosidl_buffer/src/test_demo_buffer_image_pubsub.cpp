@@ -62,7 +62,7 @@ private:
 
     auto demo_impl = std::make_unique<demo_buffer_backend::DemoBufferImpl<uint8_t>>(
       std::move(host_data));
-    msg.data.set_impl(std::move(demo_impl), "demo");
+    msg.data = rosidl::Buffer<uint8_t>(std::move(demo_impl));
 
     publisher_->publish(msg);
     count_++;
