@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>demo_buffer_py</name>
-  <version>0.1.0</version>
+  <version>5.1.2</version>
   <description>
     Python bindings for the demo buffer backend, providing a DemoBuffer
     factory that creates rosidl_buffer.Buffer objects backed by DemoBufferImpl.
@@ -10,7 +10,9 @@
 
   <maintainer email="cyc@nvidia.com">CY Chen</maintainer>
 
-  <license>Apache-2.0</license>
+  <license>Apache License 2.0</license>
+  
+  <author email="cyc@nvidia.com">CY Chen</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
