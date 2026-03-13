@@ -176,7 +176,7 @@ protected:
 // Test backend type name
 TEST_F(DemoBufferBackendTest, BackendTypeName)
 {
-  EXPECT_EQ(backend_->get_backend_type(), "test");
+  EXPECT_EQ(backend_->get_backend_type(), "demo");
 }
 
 // Test backend aux info
@@ -237,9 +237,9 @@ TEST_F(DemoBufferBackendTest, OnDiscoveringEndpoint)
 
   std::vector<rmw_topic_endpoint_info_t> existing_endpoints;
 
-  // Test with test backend supported
+  // Test with demo backend supported
   std::unordered_map<std::string, std::string> supported_backends_with_test;
-  supported_backends_with_test["test"] = "version=1.0";
+  supported_backends_with_test["demo"] = "version=1.0";
 
   auto result_with = backend_->on_discovering_endpoint(
     endpoint_info, existing_endpoints, supported_backends_with_test);

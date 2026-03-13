@@ -16,6 +16,7 @@
   <depend>rosidl_buffer_backend</depend>
   <depend>rosidl_runtime_cpp</depend>
   <depend>rosidl_buffer_backend_registry</depend>
+  <depend>rosidl_typesupport_fastrtps_cpp</depend>
   <depend>pluginlib</depend>
   <depend>demo_buffer</depend>
   <depend>demo_buffer_backend_msgs</depend>

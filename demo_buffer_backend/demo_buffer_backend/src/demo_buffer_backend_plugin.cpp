@@ -14,11 +14,12 @@
 
 #include "demo_buffer_backend/demo_buffer_backend.hpp"
 
-#include <pluginlib/class_list_macros.hpp>
 #include <rcutils/logging_macros.h>
 
+#include <pluginlib/class_list_macros.hpp>
+
 #include "demo_buffer_backend_msgs/msg/demo_buffer_descriptor.hpp"
-#include "rosidl_buffer_backend/register_buffer_descriptor.hpp"
+#include "rosidl_typesupport_fastrtps_cpp/register_buffer_descriptor.hpp"
 
 namespace demo_buffer_backend
 {
@@ -30,7 +31,7 @@ DemoBufferBackend::DemoBufferBackend()
 
   // Register FastCDR descriptor serializers automatically using the
   // rosidl-generated type support for DemoBufferDescriptor.
-  rosidl::register_buffer_descriptor<
+  rosidl_typesupport_fastrtps_cpp::register_buffer_descriptor<
     demo_buffer_backend_msgs::msg::DemoBufferDescriptor>(get_backend_type());
 }
 
