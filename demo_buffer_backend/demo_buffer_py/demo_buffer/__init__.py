@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
+r"""
 demo_buffer - Python bindings for the demo buffer backend.
 
 Provides a DemoBuffer factory that creates rosidl_buffer.Buffer objects
