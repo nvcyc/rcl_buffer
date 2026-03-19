@@ -27,6 +27,7 @@
 
 #include "rosidl_buffer_backend/buffer_backend.hpp"
 #include "demo_buffer/demo_buffer_impl.hpp"
+#include "demo_buffer_backend/visibility_control.h"
 #include "rmw/types.h"
 
 namespace demo_buffer_backend
@@ -35,7 +36,7 @@ namespace demo_buffer_backend
 /// Demo buffer backend implementation for demonstrating the buffer backend plugin system.
 /// This backend is intentionally simple - it stores data on CPU and serializes by copying.
 /// It includes a hash verification mechanism to ensure data integrity.
-class DemoBufferBackend : public rosidl::BufferBackend
+class DEMO_BUFFER_BACKEND_PUBLIC DemoBufferBackend : public rosidl::BufferBackend
 {
 public:
   /// Constructor

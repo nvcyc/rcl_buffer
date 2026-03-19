@@ -116,7 +116,8 @@ private:
     RCLCPP_INFO(
       this->get_logger(),
       "Publishing image #%zu with %s backend (size: %zu, backend: %s)",
-      count_ + 1, backend_mode_.c_str(), msg.data.size(), msg.data.get_backend_type().c_str());
+      count_ + 1, backend_mode_.c_str(), msg.data.size(),
+      msg.data.get_backend_type().c_str());
 
     publisher_->publish(msg);
 

@@ -31,6 +31,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE DEMO_BUFFER_BACKEND_BUILDING_DLL)
+
 target_link_libraries(${PROJECT_NAME} PUBLIC
   demo_buffer_backend_msgs::demo_buffer_backend_msgs__rosidl_typesupport_fastrtps_cpp
   rosidl_buffer_backend::rosidl_buffer_backend
