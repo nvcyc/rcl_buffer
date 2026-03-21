@@ -41,7 +41,7 @@ class ParameterTypesService(Node):
         del request
         if self.backend_mode == 'demo':
             from demo_buffer import DemoBuffer
-            response.types = DemoBuffer(self.payload)
+            response.types = DemoBuffer.from_cpu(self.payload)
         else:
             response.types = array.array('B', self.payload)
         return response

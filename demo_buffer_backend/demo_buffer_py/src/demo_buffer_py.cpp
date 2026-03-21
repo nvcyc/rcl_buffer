@@ -16,7 +16,6 @@
 #include <pybind11/stl.h>
 
 #include <cstdint>
-#include <cstring>
 #include <memory>
 #include <string>
 #include <vector>
@@ -26,53 +25,33 @@
 
 namespace py = pybind11;
 
-/// Create an rosidl::Buffer<uint8_t> backed by DemoBufferImpl.
-///
-/// This is the Python-facing factory function that backend vendors would
-/// provide. It creates a Buffer with the demo backend and returns it as
-/// a raw pointer integer, which the Python wrapper then uses to construct
-/// an rosidl_buffer.Buffer Python object.
-///
-/// @param data The initial data as bytes
-/// @return A new heap-allocated Buffer backed by DemoBufferImpl
-static rosidl::Buffer<uint8_t> * create_demo_buffer_from_bytes(
-  const std::string & data)
+/// Create a demo-backed rosidl::Buffer<uint8_t> and return it as a
+/// Python rosidl_buffer.Buffer by calling _take_buffer_from_ptr on the
+/// C++ side.  The uintptr_t never leaks to Python.
+static py::object wrap_demo_buffer(std::vector<uint8_t> && data)
 {
-  std::vector<uint8_t> vec(data.begin(), data.end());
-  auto demo_impl = std::make_unique<demo_buffer_backend::DemoBufferImpl<uint8_t>>(
-    std::move(vec));
-  return new rosidl::Buffer<uint8_t>(std::move(demo_impl));
-}
+  auto impl = std::make_unique<demo_buffer_backend::DemoBufferImpl<uint8_t>>(
+    std::move(data));
+  auto * buf = new rosidl::Buffer<uint8_t>(std::move(impl));
 
-/// Create an rosidl::Buffer<uint8_t> backed by DemoBufferImpl of given size.
-///
-/// @param size The number of bytes (zero-initialized)
-/// @return A new heap-allocated Buffer backed by DemoBufferImpl
-static rosidl::Buffer<uint8_t> * create_demo_buffer_from_size(size_t size)
-{
-  auto demo_impl = std::make_unique<demo_buffer_backend::DemoBufferImpl<uint8_t>>(size);
-  return new rosidl::Buffer<uint8_t>(std::move(demo_impl));
+  py::module_ rbuf = py::module_::import("rosidl_buffer._rosidl_buffer_py");
+  return rbuf.attr("_take_buffer_from_ptr")(reinterpret_cast<uintptr_t>(buf));
 }
-
 
 PYBIND11_MODULE(_demo_buffer_py, m)
 {
   m.doc() = "Python bindings for the demo buffer backend (DemoBufferImpl)";
 
-  // Factory: create a demo-backed Buffer from bytes, return as uintptr_t
-  // The Python layer wraps this into an rosidl_buffer.Buffer
-  m.def("_create_demo_buffer_from_bytes", [](py::bytes data) -> uintptr_t {
+  m.def("_from_cpu_data", [](py::bytes data) -> py::object {
       std::string s = data;
-      auto * buf = create_demo_buffer_from_bytes(s);
-      return reinterpret_cast<uintptr_t>(buf);
+      std::vector<uint8_t> vec(s.begin(), s.end());
+      return wrap_demo_buffer(std::move(vec));
     },
-    py::arg("data"),
-    "Create a demo-backed Buffer from bytes (internal, returns raw pointer)");
+    py::arg("data"));
 
-  m.def("_create_demo_buffer_from_size", [](size_t size) -> uintptr_t {
-      auto * buf = create_demo_buffer_from_size(size);
-      return reinterpret_cast<uintptr_t>(buf);
+  m.def("_from_size", [](size_t size) -> py::object {
+      std::vector<uint8_t> vec(size, 0);
+      return wrap_demo_buffer(std::move(vec));
     },
-    py::arg("size"),
-    "Create a demo-backed Buffer of given size (internal, returns raw pointer)");
+    py::arg("size"));
 }

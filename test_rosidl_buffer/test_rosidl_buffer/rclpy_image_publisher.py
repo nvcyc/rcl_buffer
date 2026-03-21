@@ -86,7 +86,7 @@ class RclpyImagePublisher(Node):
 
         if self.backend_mode == 'demo':
             from demo_buffer import DemoBuffer
-            msg.data = DemoBuffer(host_data)
+            msg.data = DemoBuffer.from_cpu(host_data)
             backend_label = msg.data.backend_type
         else:
             # CPU mode: use standard array.array (default rclpy behavior)

@@ -18,68 +18,75 @@ demo_buffer - Python bindings for the demo buffer backend.
 Provides a DemoBuffer factory that creates rosidl_buffer.Buffer objects
 backed by DemoBufferImpl (the demo/reference buffer backend).
 
-Example usage:
+Example usage::
+
     from demo_buffer import DemoBuffer
 
-    # Create a demo-backend buffer from bytes
-    buf = DemoBuffer(b'\\x00\\x01\\x02\\x03')
+    # Create a demo-backend buffer from CPU data
+    buf = DemoBuffer.from_cpu(b'\x00\x01\x02\x03')
     assert buf.backend_type == 'demo'
 
-    # Use it in a ROS2 message (sensor_msgs/Image.data)
+    # Convert back to array.array
+    cpu_array = buf.to_array()  # array.array('B', ...)
+
+    # Use it in a ROS 2 message (sensor_msgs/Image.data)
     msg = Image()
     msg.data = buf  # triggers vendor-aware serialization path
 """
 
-from demo_buffer._demo_buffer_py import (
-    _create_demo_buffer_from_bytes,
-    _create_demo_buffer_from_size,
-)
+from demo_buffer._demo_buffer_py import _from_cpu_data, _from_size
 
 
-def DemoBuffer(data=None, *, size=None):
-    """
-    Create an rosidl_buffer.Buffer backed by the demo buffer backend.
+class DemoBuffer:
+    """Factory for demo-backend rosidl::Buffer objects."""
 
-    Parameters
-    ----------
-    data : bytes or bytearray or None
-        Initial data. If provided, creates a buffer with this content.
-    size : int or None
-        Size in bytes. If provided (and data is None), creates a
-        zero-initialized buffer of this size.
+    @staticmethod
+    def from_cpu(data):
+        """
+        Create a demo-backed Buffer from CPU data.
 
-    Returns
-    -------
-    rosidl_buffer.Buffer
-        A Buffer object with backend_type == 'demo'.
+        Parameters
+        ----------
+        data : bytes, bytearray, or iterable of ints
 
-    Examples
-    --------
-    >>> buf = DemoBuffer(b'hello')
-    >>> len(buf)
-    5
-    >>> buf.backend_type
-    'demo'
+        Returns
+        -------
+        rosidl_buffer.Buffer
+            A Buffer with backend_type == 'demo'.
 
-    >>> buf = DemoBuffer(size=1024)
-    >>> len(buf)
-    1024
-
-    """
-    from rosidl_buffer import _take_buffer_from_ptr
-
-    if data is not None:
-        if not isinstance(data, (bytes, bytearray)):
+        Examples
+        --------
+        >>> buf = DemoBuffer.from_cpu(b'hello')
+        >>> len(buf)
+        5
+        >>> buf.backend_type
+        'demo'
+        """
+        if not isinstance(data, bytes):
             data = bytes(data)
-        elif isinstance(data, bytearray):
-            data = bytes(data)
-        ptr = _create_demo_buffer_from_bytes(data)
-    elif size is not None:
-        ptr = _create_demo_buffer_from_size(size)
-    else:
-        ptr = _create_demo_buffer_from_size(0)
+        return _from_cpu_data(data)
 
-    return _take_buffer_from_ptr(ptr)
+    @staticmethod
+    def from_size(size):
+        """
+        Create a zero-initialized demo-backed Buffer of given size.
+
+        Parameters
+        ----------
+        size : int
+
+        Returns
+        -------
+        rosidl_buffer.Buffer
+            A zero-filled Buffer with backend_type == 'demo'.
+
+        Examples
+        --------
+        >>> buf = DemoBuffer.from_size(1024)
+        >>> len(buf)
+        1024
+        """
+        return _from_size(size)
 
 
 __all__ = ['DemoBuffer']

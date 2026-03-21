@@ -21,12 +21,12 @@ import array
 import unittest
 
 from demo_buffer import DemoBuffer
-from rosidl_buffer import Buffer, is_buffer
+from rosidl_buffer import Buffer
 
 
 def _make_buffer(data=b'\x00\x01\x02\x03\x04'):
     """Create a DemoBuffer (non-CPU backend) from bytes."""
-    return DemoBuffer(data)
+    return DemoBuffer.from_cpu(data)
 
 
 class TestBufferType(unittest.TestCase):
@@ -56,9 +56,9 @@ class TestBufferProperties(unittest.TestCase):
         buf = _make_buffer()
         self.assertEqual(buf.backend_type, 'demo')
 
-    def test_is_cpu_false_for_demo(self):
+    def test_backend_type_not_cpu_for_demo(self):
         buf = _make_buffer()
-        self.assertFalse(buf.is_cpu)
+        self.assertNotEqual(buf.backend_type, 'cpu')
 
 
 class TestBufferLen(unittest.TestCase):
@@ -109,19 +109,19 @@ class TestBufferRepr(unittest.TestCase):
         self.assertTrue(repr(buf).startswith('Buffer('))
 
 
-class TestBufferIsBufferFunction(unittest.TestCase):
-    """is_buffer() utility function."""
+class TestBufferIsinstance(unittest.TestCase):
+    """isinstance() checks with Buffer."""
 
-    def test_is_buffer_on_buffer(self):
+    def test_isinstance_buffer(self):
         buf = _make_buffer()
-        self.assertTrue(is_buffer(buf))
+        self.assertIsInstance(buf, Buffer)
 
-    def test_is_buffer_on_array(self):
+    def test_array_is_not_buffer(self):
         arr = array.array('B', [1, 2, 3])
-        self.assertFalse(is_buffer(arr))
+        self.assertNotIsInstance(arr, Buffer)
 
-    def test_is_buffer_on_int(self):
-        self.assertFalse(is_buffer(42))
+    def test_int_is_not_buffer(self):
+        self.assertNotIsInstance(42, Buffer)
 
 
 class TestBufferMessageIntegration(unittest.TestCase):

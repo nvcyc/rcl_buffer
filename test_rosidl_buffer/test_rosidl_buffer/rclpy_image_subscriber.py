@@ -79,8 +79,8 @@ class RclpyImageSubscriber(Node):
         # Determine backend type
         backend_type = 'cpu'
         try:
-            from rosidl_buffer import is_buffer
-            if is_buffer(data):
+            from rosidl_buffer import Buffer
+            if isinstance(data, Buffer):
                 backend_type = data.backend_type
         except ImportError:
             pass
