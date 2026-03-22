@@ -179,10 +179,10 @@ TEST_F(DemoBufferBackendTest, BackendTypeName)
   EXPECT_EQ(backend_->get_backend_type(), "demo");
 }
 
-// Test backend aux info
-TEST_F(DemoBufferBackendTest, BackendAuxInfo)
+// Test backend metadata
+TEST_F(DemoBufferBackendTest, BackendMetadata)
 {
-  EXPECT_EQ(backend_->get_backend_aux_info(), "version=1.0");
+  EXPECT_EQ(backend_->get_backend_metadata(), "version=1.0");
 }
 
 // Test create_descriptor_with_endpoint

@@ -51,8 +51,8 @@ public:
     return "demo";
   }
 
-  /// Get backend aux info (empty for demo backend)
-  std::string get_backend_aux_info() const override
+  /// Get backend metadata
+  std::string get_backend_metadata() const override
   {
     return "version=1.0";
   }
