@@ -92,20 +92,11 @@ else()
   message(STATUS "demo_buffer NOT found - skipping demo backend nodes")
 endif()
 
-# Install Python package for rclpy test nodes
-ament_python_install_package(test_rosidl_buffer)
-
-# Install Python entry point scripts
-install(PROGRAMS
-  scripts/rclpy_image_publisher
-  scripts/rclpy_image_subscriber
-  scripts/rclpy_legacy_image_publisher
-  scripts/rclpy_legacy_image_subscriber
-  scripts/rclpy_parameter_types_service
-  scripts/rclpy_parameter_types_client
-  scripts/rclpy_fibonacci_action_server
-  scripts/rclpy_fibonacci_action_client
-  DESTINATION lib/${PROJECT_NAME}
+# Install Python package for rclpy test nodes.
+# SCRIPTS_DESTINATION makes setuptools generate proper .exe wrappers on Windows
+# (extensionless shebang scripts don't work there — WinError 193).
+ament_python_install_package(test_rosidl_buffer
+  SCRIPTS_DESTINATION lib/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
