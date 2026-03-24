@@ -48,6 +48,7 @@ class DemoBuffer:
         Parameters
         ----------
         data : bytes, bytearray, or iterable of ints
+            The raw CPU data to copy into the buffer.
 
         Returns
         -------
@@ -61,6 +62,7 @@ class DemoBuffer:
         5
         >>> buf.backend_type
         'demo'
+
         """
         if not isinstance(data, bytes):
             data = bytes(data)
@@ -74,6 +76,7 @@ class DemoBuffer:
         Parameters
         ----------
         size : int
+            Number of bytes to allocate.
 
         Returns
         -------
@@ -85,6 +88,7 @@ class DemoBuffer:
         >>> buf = DemoBuffer.from_size(1024)
         >>> len(buf)
         1024
+
         """
         return _from_size(size)
 
