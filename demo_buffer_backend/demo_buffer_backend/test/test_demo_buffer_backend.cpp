@@ -225,7 +225,7 @@ TEST_F(DemoBufferBackendTest, FromDescriptorWithEndpoint)
 
   // Reconstruct from descriptor
   auto result = backend_->from_descriptor_with_endpoint(descriptor.get(), endpoint_info);
-  ASSERT_NE(result, nullptr);
+  ASSERT_NE(result.get(), nullptr);
 }
 
 // Test on_discovering_endpoint

@@ -109,19 +109,21 @@ std::shared_ptr<void> DemoBufferBackend::create_descriptor_with_endpoint(
 }
 
 //==============================================================================
-std::shared_ptr<void> DemoBufferBackend::from_descriptor_with_endpoint(
+std::unique_ptr<void, void (*)(void *)> DemoBufferBackend::from_descriptor_with_endpoint(
   const void * descriptor,
   const rmw_topic_endpoint_info_t & endpoint_info) const
 {
   (void)endpoint_info;
 
-  auto temp_impl = std::make_shared<DemoBufferImpl<uint8_t>>();
+  DemoBufferImpl<uint8_t> temp_impl;
 
   rmw_gid_t dummy_gid;
   std::memset(&dummy_gid, 0, sizeof(dummy_gid));
 
-  auto result = temp_impl->from_descriptor(descriptor, dummy_gid);
-  return result;
+  auto result = temp_impl.from_descriptor(descriptor, dummy_gid);
+  return {result.release(), [](void * p) {
+      delete static_cast<rosidl::BufferImplBase<uint8_t> *>(p);
+    }};
 }
 
 }  // namespace demo_buffer_backend

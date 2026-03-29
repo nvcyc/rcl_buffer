@@ -70,7 +70,7 @@ public:
     const rmw_topic_endpoint_info_t & endpoint_info) const override;
 
   /// Create BufferImpl from descriptor with endpoint awareness
-  std::shared_ptr<void> from_descriptor_with_endpoint(
+  std::unique_ptr<void, void (*)(void *)> from_descriptor_with_endpoint(
     const void * descriptor,
     const rmw_topic_endpoint_info_t & endpoint_info) const override;
 
