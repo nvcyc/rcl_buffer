@@ -27,6 +27,7 @@
 
 #include "rosidl_buffer_backend/buffer_backend.hpp"
 #include "demo_buffer/demo_buffer_impl.hpp"
+#include "demo_buffer_backend_msgs/msg/demo_buffer_descriptor.hpp"
 #include "demo_buffer_backend/visibility_control.h"
 #include "rmw/types.h"
 
@@ -56,6 +57,10 @@ public:
   {
     return "version=1.0";
   }
+
+  const rosidl_message_type_support_t * get_descriptor_type_support() const override;
+
+  std::shared_ptr<void> create_empty_descriptor() const override;
 
   /// Create descriptor with endpoint awareness.
   /// Returns nullptr if the endpoint is not compatible with the demo backend,

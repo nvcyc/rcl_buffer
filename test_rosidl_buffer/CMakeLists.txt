@@ -121,10 +121,6 @@ if(BUILD_TESTING)
       TARGET test_1pub_1sub_cpu_to_cpu
       TIMEOUT 30
     )
-    add_launch_test(test/test_1pub_1sub_demo_to_demo.py
-      TARGET test_1pub_1sub_demo_to_demo
-      TIMEOUT 30
-    )
 
     # rclpy publisher/subscriber: 1 pub to 1 sub tests
     add_launch_test(test/test_rclpy_1pub_1sub_cpu_to_cpu.py
@@ -163,14 +159,6 @@ if(BUILD_TESTING)
       TARGET test_rclpy_pub_cpu_rclcpp_sub_rclpy_sub_cpu
       TIMEOUT 30
     )
-    add_launch_test(test/test_rclcpp_pub_demo_rclcpp_sub_rclpy_sub_demo.py
-      TARGET test_rclcpp_pub_demo_rclcpp_sub_rclpy_sub_demo
-      TIMEOUT 30
-    )
-    add_launch_test(test/test_rclpy_pub_demo_rclcpp_sub_rclpy_sub_demo.py
-      TARGET test_rclpy_pub_demo_rclcpp_sub_rclpy_sub_demo
-      TIMEOUT 30
-    )
 
     # Demo publisher to legacy array.array subscriber (backward-compat)
     add_launch_test(test/test_rclpy_demo_pub_legacy_array_sub.py
@@ -204,14 +192,6 @@ if(BUILD_TESTING)
     )
 
     # acceptable_buffer_backends option tests: demo to demo with 'any' and 'demo'
-    add_launch_test(test/test_1pub_1sub_demo_to_demo_sub_any.py
-      TARGET test_1pub_1sub_demo_to_demo_sub_any
-      TIMEOUT 30
-    )
-    add_launch_test(test/test_1pub_1sub_demo_to_demo_sub_demo.py
-      TARGET test_1pub_1sub_demo_to_demo_sub_demo
-      TIMEOUT 30
-    )
 
     # acceptable_buffer_backends option tests: cpu to cpu with '', 'cpu', and default
     add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_empty.py

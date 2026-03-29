@@ -19,7 +19,7 @@
 #include <pluginlib/class_list_macros.hpp>
 
 #include "demo_buffer_backend_msgs/msg/demo_buffer_descriptor.hpp"
-#include "rosidl_typesupport_fastrtps_cpp/register_buffer_descriptor.hpp"
+#include "rosidl_typesupport_cpp/message_type_support.hpp"
 
 namespace demo_buffer_backend
 {
@@ -28,11 +28,21 @@ namespace demo_buffer_backend
 DemoBufferBackend::DemoBufferBackend()
 {
   RCUTILS_LOG_INFO_NAMED("demo_buffer_backend", "DemoBufferBackend created");
+}
 
-  // Register FastCDR descriptor serializers automatically using the
-  // rosidl-generated type support for DemoBufferDescriptor.
-  rosidl_typesupport_fastrtps_cpp::register_buffer_descriptor<
-    demo_buffer_backend_msgs::msg::DemoBufferDescriptor>(get_backend_type());
+//==============================================================================
+const rosidl_message_type_support_t *
+DemoBufferBackend::get_descriptor_type_support() const
+{
+  return rosidl_typesupport_cpp::get_message_type_support_handle<
+    demo_buffer_backend_msgs::msg::DemoBufferDescriptor>();
+}
+
+//==============================================================================
+std::shared_ptr<void>
+DemoBufferBackend::create_empty_descriptor() const
+{
+  return std::make_shared<demo_buffer_backend_msgs::msg::DemoBufferDescriptor>();
 }
 
 //==============================================================================
