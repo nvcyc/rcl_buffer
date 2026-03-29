@@ -152,13 +152,13 @@ public:
   }
 
   std::unique_ptr<rosidl::BufferImplBase<T>> from_descriptor(
-    const std::shared_ptr<void> & descriptor_ptr,
+    const void * descriptor_ptr,
     const rmw_gid_t & publisher_gid) const
   {
     (void)publisher_gid;  // Not used for demo backend
 
-    auto descriptor = std::static_pointer_cast<demo_buffer_backend_msgs::msg::DemoBufferDescriptor>(
-      descriptor_ptr);
+    const auto * descriptor =
+      static_cast<const demo_buffer_backend_msgs::msg::DemoBufferDescriptor *>(descriptor_ptr);
 
     RCUTILS_LOG_INFO_NAMED(
       "demo_buffer_backend",

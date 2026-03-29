@@ -89,7 +89,7 @@ DemoBufferBackend::on_discovering_endpoint(
 
 //==============================================================================
 std::shared_ptr<void> DemoBufferBackend::create_descriptor_with_endpoint(
-  const std::shared_ptr<void> & impl,
+  const void * impl,
   const rmw_topic_endpoint_info_t & endpoint_info) const
 {
   {
@@ -100,7 +100,7 @@ std::shared_ptr<void> DemoBufferBackend::create_descriptor_with_endpoint(
     }
   }
 
-  auto demo_impl = std::static_pointer_cast<DemoBufferImpl<uint8_t>>(impl);
+  const auto * demo_impl = static_cast<const DemoBufferImpl<uint8_t> *>(impl);
 
   rmw_gid_t dummy_gid;
   std::memset(&dummy_gid, 0, sizeof(dummy_gid));
@@ -110,10 +110,10 @@ std::shared_ptr<void> DemoBufferBackend::create_descriptor_with_endpoint(
 
 //==============================================================================
 std::shared_ptr<void> DemoBufferBackend::from_descriptor_with_endpoint(
-  const std::shared_ptr<void> & descriptor,
+  const void * descriptor,
   const rmw_topic_endpoint_info_t & endpoint_info) const
 {
-  (void)endpoint_info;  // Demo backend doesn't use endpoint info for descriptor
+  (void)endpoint_info;
 
   auto temp_impl = std::make_shared<DemoBufferImpl<uint8_t>>();
 

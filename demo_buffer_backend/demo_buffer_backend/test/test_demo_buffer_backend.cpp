@@ -106,11 +106,11 @@ TEST_F(DemoBufferImplTest, DescriptorRoundTrip)
   rmw_gid_t dummy_gid;
   std::memset(&dummy_gid, 0, sizeof(dummy_gid));
 
-  auto descriptor_ptr = original.create_descriptor(dummy_gid);
-  ASSERT_NE(descriptor_ptr, nullptr);
+  auto descriptor_shared = original.create_descriptor(dummy_gid);
+  ASSERT_NE(descriptor_shared, nullptr);
 
   auto descriptor = std::static_pointer_cast<
-    demo_buffer_backend_msgs::msg::DemoBufferDescriptor>(descriptor_ptr);
+    demo_buffer_backend_msgs::msg::DemoBufferDescriptor>(descriptor_shared);
 
   // Verify descriptor contents
   EXPECT_EQ(descriptor->size, test_data.size());
@@ -119,7 +119,7 @@ TEST_F(DemoBufferImplTest, DescriptorRoundTrip)
 
   // Reconstruct buffer from descriptor
   DemoBufferImpl<uint8_t> temp;
-  auto reconstructed_ptr = temp.from_descriptor(descriptor_ptr, dummy_gid);
+  auto reconstructed_ptr = temp.from_descriptor(descriptor_shared.get(), dummy_gid);
   ASSERT_NE(reconstructed_ptr, nullptr);
 
   auto reconstructed = dynamic_cast<DemoBufferImpl<uint8_t> *>(reconstructed_ptr.get());
@@ -198,7 +198,7 @@ TEST_F(DemoBufferBackendTest, CreateDescriptorWithEndpoint)
   endpoint_info.topic_type = "test_type";
 
   // Create descriptor
-  auto descriptor = backend_->create_descriptor_with_endpoint(impl, endpoint_info);
+  auto descriptor = backend_->create_descriptor_with_endpoint(impl.get(), endpoint_info);
   ASSERT_NE(descriptor, nullptr);
 
   auto typed_desc = std::static_pointer_cast<
@@ -224,7 +224,7 @@ TEST_F(DemoBufferBackendTest, FromDescriptorWithEndpoint)
   endpoint_info.topic_type = "test_type";
 
   // Reconstruct from descriptor
-  auto result = backend_->from_descriptor_with_endpoint(descriptor, endpoint_info);
+  auto result = backend_->from_descriptor_with_endpoint(descriptor.get(), endpoint_info);
   ASSERT_NE(result, nullptr);
 }
 

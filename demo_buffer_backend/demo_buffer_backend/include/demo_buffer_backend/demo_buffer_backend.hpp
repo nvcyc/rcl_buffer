@@ -66,12 +66,12 @@ public:
   /// Returns nullptr if the endpoint is not compatible with the demo backend,
   /// signaling that the serialization layer should fall back to CPU.
   std::shared_ptr<void> create_descriptor_with_endpoint(
-    const std::shared_ptr<void> & impl,
+    const void * impl,
     const rmw_topic_endpoint_info_t & endpoint_info) const override;
 
   /// Create BufferImpl from descriptor with endpoint awareness
   std::shared_ptr<void> from_descriptor_with_endpoint(
-    const std::shared_ptr<void> & descriptor,
+    const void * descriptor,
     const rmw_topic_endpoint_info_t & endpoint_info) const override;
 
   /// Hook for creating local endpoint (logs endpoint creation)
