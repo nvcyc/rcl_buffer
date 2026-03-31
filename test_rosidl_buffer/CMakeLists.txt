@@ -116,63 +116,63 @@ if(BUILD_TESTING)
   if(demo_buffer_backend_FOUND)
     find_package(launch_testing_ament_cmake REQUIRED)
 
-    # C++ publisher/subscriber: 1 pub to 1 sub tests
-    add_launch_test(test/test_1pub_1sub_cpu_to_cpu.py
-      TARGET test_1pub_1sub_cpu_to_cpu
+    # Zenoh tests: C++ publisher/subscriber: 1 pub to 1 sub tests
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_zenoh.py
+      TARGET test_1pub_1sub_cpu_to_cpu_zenoh
       TIMEOUT 30
     )
 
-    # rclpy publisher/subscriber: 1 pub to 1 sub tests
-    add_launch_test(test/test_rclpy_1pub_1sub_cpu_to_cpu.py
-      TARGET test_rclpy_1pub_1sub_cpu_to_cpu
+    # Zenoh tests: rclpy publisher/subscriber: 1 pub to 1 sub tests
+    add_launch_test(test/test_rclpy_1pub_1sub_cpu_to_cpu_zenoh.py
+      TARGET test_rclpy_1pub_1sub_cpu_to_cpu_zenoh
       TIMEOUT 30
     )
-    add_launch_test(test/test_rclpy_1pub_1sub_demo_to_demo.py
-      TARGET test_rclpy_1pub_1sub_demo_to_demo
-      TIMEOUT 30
-    )
-
-    # Cross-language (rclcpp <-> rclpy) tests
-    add_launch_test(test/test_rclcpp_pub_cpu_rclpy_sub_cpu.py
-      TARGET test_rclcpp_pub_cpu_rclpy_sub_cpu
-      TIMEOUT 30
-    )
-    add_launch_test(test/test_rclpy_pub_cpu_rclcpp_sub_cpu.py
-      TARGET test_rclpy_pub_cpu_rclcpp_sub_cpu
-      TIMEOUT 30
-    )
-    add_launch_test(test/test_rclcpp_pub_demo_rclpy_sub_demo.py
-      TARGET test_rclcpp_pub_demo_rclpy_sub_demo
-      TIMEOUT 30
-    )
-    add_launch_test(test/test_rclpy_pub_demo_rclcpp_sub_demo.py
-      TARGET test_rclpy_pub_demo_rclcpp_sub_demo
+    add_launch_test(test/test_rclpy_1pub_1sub_demo_to_demo_zenoh.py
+      TARGET test_rclpy_1pub_1sub_demo_to_demo_zenoh
       TIMEOUT 30
     )
 
-    # Cross-language 1 pub to 2 subs (rclcpp + rclpy) tests
-    add_launch_test(test/test_rclcpp_pub_cpu_rclcpp_sub_rclpy_sub_cpu.py
-      TARGET test_rclcpp_pub_cpu_rclcpp_sub_rclpy_sub_cpu
+    # Zenoh tests: Cross-language (rclcpp <-> rclpy) tests
+    add_launch_test(test/test_rclcpp_pub_cpu_rclpy_sub_cpu_zenoh.py
+      TARGET test_rclcpp_pub_cpu_rclpy_sub_cpu_zenoh
       TIMEOUT 30
     )
-    add_launch_test(test/test_rclpy_pub_cpu_rclcpp_sub_rclpy_sub_cpu.py
-      TARGET test_rclpy_pub_cpu_rclcpp_sub_rclpy_sub_cpu
+    add_launch_test(test/test_rclpy_pub_cpu_rclcpp_sub_cpu_zenoh.py
+      TARGET test_rclpy_pub_cpu_rclcpp_sub_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclcpp_pub_demo_rclpy_sub_demo_zenoh.py
+      TARGET test_rclcpp_pub_demo_rclpy_sub_demo_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclpy_pub_demo_rclcpp_sub_demo_zenoh.py
+      TARGET test_rclpy_pub_demo_rclcpp_sub_demo_zenoh
       TIMEOUT 30
     )
 
-    # Demo publisher to legacy array.array subscriber (backward-compat)
-    add_launch_test(test/test_rclpy_demo_pub_legacy_array_sub.py
-      TARGET test_rclpy_demo_pub_legacy_array_sub
+    # Zenoh tests: Cross-language 1 pub to 2 subs (rclcpp + rclpy) tests
+    add_launch_test(test/test_rclcpp_pub_cpu_rclcpp_sub_rclpy_sub_cpu_zenoh.py
+      TARGET test_rclcpp_pub_cpu_rclcpp_sub_rclpy_sub_cpu_zenoh
       TIMEOUT 30
     )
-    add_launch_test(test/test_rclcpp_demo_pub_rclpy_legacy_array_sub.py
-      TARGET test_rclcpp_demo_pub_rclpy_legacy_array_sub
+    add_launch_test(test/test_rclpy_pub_cpu_rclcpp_sub_rclpy_sub_cpu_zenoh.py
+      TARGET test_rclpy_pub_cpu_rclcpp_sub_rclpy_sub_cpu_zenoh
       TIMEOUT 30
     )
 
-    # Legacy array.array publisher to demo-aware subscriber (backward-compat)
-    add_launch_test(test/test_rclpy_legacy_array_pub_demo_sub.py
-      TARGET test_rclpy_legacy_array_pub_demo_sub
+    # Zenoh tests: Demo publisher to legacy array.array subscriber (backward-compat)
+    add_launch_test(test/test_rclpy_demo_pub_legacy_array_sub_zenoh.py
+      TARGET test_rclpy_demo_pub_legacy_array_sub_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclcpp_demo_pub_rclpy_legacy_array_sub_zenoh.py
+      TARGET test_rclcpp_demo_pub_rclpy_legacy_array_sub_zenoh
+      TIMEOUT 30
+    )
+
+    # Zenoh tests: Legacy array.array publisher to demo-aware subscriber (backward-compat)
+    add_launch_test(test/test_rclpy_legacy_array_pub_demo_sub_zenoh.py
+      TARGET test_rclpy_legacy_array_pub_demo_sub_zenoh
       TIMEOUT 30
     )
 
@@ -193,31 +193,31 @@ if(BUILD_TESTING)
 
     # acceptable_buffer_backends option tests: demo to demo with 'any' and 'demo'
 
-    # acceptable_buffer_backends option tests: cpu to cpu with '', 'cpu', and default
-    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_empty.py
-      TARGET test_1pub_1sub_cpu_to_cpu_sub_empty
+    # CycloneDDS tests: acceptable_buffer_backends option tests: cpu to cpu with '', 'cpu', and default
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_empty_cyclonedds.py
+      TARGET test_1pub_1sub_cpu_to_cpu_sub_empty_cyclonedds
       TIMEOUT 30
     )
-    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_cpu.py
-      TARGET test_1pub_1sub_cpu_to_cpu_sub_cpu
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_cpu_cyclonedds.py
+      TARGET test_1pub_1sub_cpu_to_cpu_sub_cpu_cyclonedds
       TIMEOUT 30
     )
-    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_default.py
-      TARGET test_1pub_1sub_cpu_to_cpu_sub_default
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_default_cyclonedds.py
+      TARGET test_1pub_1sub_cpu_to_cpu_sub_default_cyclonedds
       TIMEOUT 30
     )
 
-    # acceptable_buffer_backends option tests: demo to cpu with '', 'cpu', and default
-    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_empty.py
-      TARGET test_1pub_1sub_demo_to_cpu_sub_empty
+    # CycloneDDS tests: acceptable_buffer_backends option tests: demo to cpu with '', 'cpu', and default
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_empty_cyclonedds.py
+      TARGET test_1pub_1sub_demo_to_cpu_sub_empty_cyclonedds
       TIMEOUT 30
     )
-    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_cpu.py
-      TARGET test_1pub_1sub_demo_to_cpu_sub_cpu
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_cpu_cyclonedds.py
+      TARGET test_1pub_1sub_demo_to_cpu_sub_cpu_cyclonedds
       TIMEOUT 30
     )
-    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_default.py
-      TARGET test_1pub_1sub_demo_to_cpu_sub_default
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_default_cyclonedds.py
+      TARGET test_1pub_1sub_demo_to_cpu_sub_default_cyclonedds
       TIMEOUT 30
     )
 
@@ -266,6 +266,108 @@ if(BUILD_TESTING)
     add_launch_test(test/test_2pub_2sub_demo_to_demo_fastrtps.py
       TARGET test_2pub_2sub_demo_to_demo_fastrtps
       TIMEOUT 60
+    )
+
+    # FastRTPS tests: acceptable_buffer_backends option tests
+    add_launch_test(test/test_1pub_1sub_demo_to_demo_sub_any_fastrtps.py
+      TARGET test_1pub_1sub_demo_to_demo_sub_any_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_demo_sub_demo_fastrtps.py
+      TARGET test_1pub_1sub_demo_to_demo_sub_demo_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_empty_fastrtps.py
+      TARGET test_1pub_1sub_cpu_to_cpu_sub_empty_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_cpu_fastrtps.py
+      TARGET test_1pub_1sub_cpu_to_cpu_sub_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_default_fastrtps.py
+      TARGET test_1pub_1sub_cpu_to_cpu_sub_default_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_empty_fastrtps.py
+      TARGET test_1pub_1sub_demo_to_cpu_sub_empty_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_cpu_fastrtps.py
+      TARGET test_1pub_1sub_demo_to_cpu_sub_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_default_fastrtps.py
+      TARGET test_1pub_1sub_demo_to_cpu_sub_default_fastrtps
+      TIMEOUT 45
+    )
+
+    # FastRTPS tests: rclpy-only publisher/subscriber
+    add_launch_test(test/test_rclpy_1pub_1sub_cpu_to_cpu_fastrtps.py
+      TARGET test_rclpy_1pub_1sub_cpu_to_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclpy_1pub_1sub_cpu_to_cpu_explicit_fastrtps.py
+      TARGET test_rclpy_1pub_1sub_cpu_to_cpu_explicit_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclpy_1pub_1sub_demo_to_demo_fastrtps.py
+      TARGET test_rclpy_1pub_1sub_demo_to_demo_fastrtps
+      TIMEOUT 45
+    )
+
+    # FastRTPS tests: Cross-language (rclcpp <-> rclpy) tests
+    add_launch_test(test/test_rclcpp_pub_cpu_rclpy_sub_cpu_fastrtps.py
+      TARGET test_rclcpp_pub_cpu_rclpy_sub_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclpy_pub_cpu_rclcpp_sub_cpu_fastrtps.py
+      TARGET test_rclpy_pub_cpu_rclcpp_sub_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclcpp_pub_demo_rclpy_sub_demo_fastrtps.py
+      TARGET test_rclcpp_pub_demo_rclpy_sub_demo_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclpy_pub_demo_rclcpp_sub_demo_fastrtps.py
+      TARGET test_rclpy_pub_demo_rclcpp_sub_demo_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclcpp_pub_cpu_rclpy_sub_cpu_explicit_fastrtps.py
+      TARGET test_rclcpp_pub_cpu_rclpy_sub_cpu_explicit_fastrtps
+      TIMEOUT 45
+    )
+
+    # FastRTPS tests: Cross-language 1 pub to 2 subs (rclcpp + rclpy)
+    add_launch_test(test/test_rclcpp_pub_cpu_rclcpp_sub_rclpy_sub_cpu_fastrtps.py
+      TARGET test_rclcpp_pub_cpu_rclcpp_sub_rclpy_sub_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclpy_pub_cpu_rclcpp_sub_rclpy_sub_cpu_fastrtps.py
+      TARGET test_rclpy_pub_cpu_rclcpp_sub_rclpy_sub_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclcpp_pub_demo_rclcpp_sub_rclpy_sub_demo_fastrtps.py
+      TARGET test_rclcpp_pub_demo_rclcpp_sub_rclpy_sub_demo_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclpy_pub_demo_rclcpp_sub_rclpy_sub_demo_fastrtps.py
+      TARGET test_rclpy_pub_demo_rclcpp_sub_rclpy_sub_demo_fastrtps
+      TIMEOUT 45
+    )
+
+    # FastRTPS tests: Legacy array.array backward compatibility
+    add_launch_test(test/test_rclpy_demo_pub_legacy_array_sub_fastrtps.py
+      TARGET test_rclpy_demo_pub_legacy_array_sub_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclcpp_demo_pub_rclpy_legacy_array_sub_fastrtps.py
+      TARGET test_rclcpp_demo_pub_rclpy_legacy_array_sub_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclpy_legacy_array_pub_demo_sub_fastrtps.py
+      TARGET test_rclpy_legacy_array_pub_demo_sub_fastrtps
+      TIMEOUT 45
     )
   endif()
 endif()
