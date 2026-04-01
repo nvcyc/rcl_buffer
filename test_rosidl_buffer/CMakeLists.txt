@@ -369,6 +369,24 @@ if(BUILD_TESTING)
       TARGET test_rclpy_legacy_array_pub_demo_sub_fastrtps
       TIMEOUT 45
     )
+
+    # FastRTPS tests: Same-process (pub + sub in one process)
+    add_launch_test(test/test_same_process_cpu_to_cpu_fastrtps.py
+      TARGET test_same_process_cpu_to_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_same_process_demo_to_demo_fastrtps.py
+      TARGET test_same_process_demo_to_demo_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclpy_same_process_cpu_to_cpu_fastrtps.py
+      TARGET test_rclpy_same_process_cpu_to_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclpy_same_process_demo_to_demo_fastrtps.py
+      TARGET test_rclpy_same_process_demo_to_demo_fastrtps
+      TIMEOUT 45
+    )
   endif()
 endif()
 
