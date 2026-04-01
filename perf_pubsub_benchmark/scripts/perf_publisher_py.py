@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""rclpy performance publisher – same wire protocol as the C++ perf_publisher."""
+"""rclpy performance publisher – uses PerfMessage with uint8[] payload."""
 
 import sys
 import threading
@@ -24,7 +24,7 @@ import rclpy
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
-from std_msgs.msg import String
+from perf_pubsub_benchmark.msg import PerfMessage
 
 
 class PerfPublisherPy(Node):
@@ -58,10 +58,9 @@ class PerfPublisherPy(Node):
                 else ReliabilityPolicy.BEST_EFFORT
             ),
         )
-        self._publisher = self.create_publisher(String, self._topic_name, qos)
+        self._publisher = self.create_publisher(PerfMessage, self._topic_name, qos)
 
-        header_estimate = 40
-        self._padding = "X" * max(0, self._msg_size - header_estimate)
+        self._payload = bytes(b'\xAA' * max(0, self._msg_size))
 
         self.get_logger().info(
             f"PerfPublisherPy: topic={self._topic_name} rate={self._rate_hz}Hz "
@@ -79,11 +78,13 @@ class PerfPublisherPy(Node):
         return self._done
 
     def _publish_loop(self):
-        # Warmup phase
+        # Warmup phase: timestamp_ns=0 signals warmup
         warmup_end = time.monotonic() + self._warmup_sec
-        msg = String()
         while rclpy.ok() and not self._done and time.monotonic() < warmup_end:
-            msg.data = "warmup"
+            msg = PerfMessage()
+            msg.pub_id = self._pub_id
+            msg.seq = 0
+            msg.timestamp_ns = 0
             self._publisher.publish(msg)
             time.sleep(0.01)
 
@@ -98,8 +99,11 @@ class PerfPublisherPy(Node):
 
         while rclpy.ok() and not self._done and time.monotonic() < end_time:
             ts_ns = time.monotonic_ns()
-            msg = String()
-            msg.data = f"{self._pub_id}:{seq}:{ts_ns}:{self._padding}"
+            msg = PerfMessage()
+            msg.pub_id = self._pub_id
+            msg.seq = seq
+            msg.timestamp_ns = ts_ns
+            msg.data = self._payload
             self._publisher.publish(msg)
             seq += 1
 

@@ -22,10 +22,11 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
+#include "perf_pubsub_benchmark/msg/perf_message.hpp"
 
 using namespace std::chrono_literals;
 using Clock = std::chrono::steady_clock;
+using PerfMsg = perf_pubsub_benchmark::msg::PerfMessage;
 
 class PerfSubscriber : public rclcpp::Node
 {
@@ -64,7 +65,7 @@ public:
       qos.best_effort();
     }
 
-    subscription_ = create_subscription<std_msgs::msg::String>(
+    subscription_ = create_subscription<PerfMsg>(
       topic_name_, qos,
       std::bind(&PerfSubscriber::msg_callback, this, std::placeholders::_1));
 
@@ -90,10 +91,10 @@ public:
   bool is_done() const {return done_.load();}
 
 private:
-  void msg_callback(const std_msgs::msg::String::SharedPtr msg)
+  void msg_callback(const PerfMsg::SharedPtr msg)
   {
-    if (msg->data == "warmup") {
-      return;
+    if (msg->timestamp_ns == 0) {
+      return;  // warmup message
     }
 
     auto now = Clock::now();
@@ -103,39 +104,23 @@ private:
     }
     last_msg_time_ = now;
 
-    // Parse format: pub_id:seq:timestamp_ns:padding
-    try {
-      auto & data = msg->data;
-      size_t pos1 = data.find(':');
-      size_t pos2 = data.find(':', pos1 + 1);
-      size_t pos3 = data.find(':', pos2 + 1);
-      if (pos1 == std::string::npos || pos2 == std::string::npos ||
-        pos3 == std::string::npos)
-      {
-        return;
-      }
-      uint64_t seq = std::stoull(data.substr(pos1 + 1, pos2 - pos1 - 1));
-      int64_t send_ns = std::stoll(data.substr(pos2 + 1, pos3 - pos2 - 1));
-
-      auto recv_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        now.time_since_epoch()).count();
-      int64_t latency_ns = recv_ns - send_ns;
-      if (latency_ns >= 0) {
-        latency_min_ns_ = std::min(latency_min_ns_, latency_ns);
-        latency_max_ns_ = std::max(latency_max_ns_, latency_ns);
-        latency_sum_ns_ += latency_ns;
-      }
-
-      if (seq < first_seq_) {
-        first_seq_ = seq;
-      }
-      if (seq > last_seq_) {
-        last_seq_ = seq;
-      }
-      received_++;
-    } catch (...) {
-      // Malformed message, skip
+    auto recv_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      now.time_since_epoch()).count();
+    int64_t latency_ns = recv_ns - msg->timestamp_ns;
+    if (latency_ns >= 0) {
+      latency_min_ns_ = std::min(latency_min_ns_, latency_ns);
+      latency_max_ns_ = std::max(latency_max_ns_, latency_ns);
+      latency_sum_ns_ += latency_ns;
     }
+
+    uint64_t seq = msg->seq;
+    if (seq < first_seq_) {
+      first_seq_ = seq;
+    }
+    if (seq > last_seq_) {
+      last_seq_ = seq;
+    }
+    received_++;
   }
 
   void check_timeout()
@@ -222,7 +207,7 @@ private:
   Clock::time_point measure_start_;
   Clock::time_point last_msg_time_;
 
-  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
+  rclcpp::Subscription<PerfMsg>::SharedPtr subscription_;
   rclcpp::TimerBase::SharedPtr check_timer_;
 };
 

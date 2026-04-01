@@ -7,23 +7,26 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/PerfMessage.msg"
+)
 
 add_executable(perf_publisher
   src/perf_publisher.cpp
 )
-target_link_libraries(perf_publisher
-  rclcpp::rclcpp
-  ${std_msgs_TARGETS}
-)
+target_link_libraries(perf_publisher rclcpp::rclcpp)
 
 add_executable(perf_subscriber
   src/perf_subscriber.cpp
 )
-target_link_libraries(perf_subscriber
-  rclcpp::rclcpp
-  ${std_msgs_TARGETS}
-)
+target_link_libraries(perf_subscriber rclcpp::rclcpp)
+
+rosidl_get_typesupport_target(cpp_typesupport_target
+  "${PROJECT_NAME}" "rosidl_typesupport_cpp")
+target_link_libraries(perf_publisher "${cpp_typesupport_target}")
+target_link_libraries(perf_subscriber "${cpp_typesupport_target}")
 
 install(TARGETS
   perf_publisher

@@ -19,12 +19,14 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
+#include "perf_pubsub_benchmark/msg/perf_message.hpp"
 
 using namespace std::chrono_literals;
 using Clock = std::chrono::steady_clock;
+using PerfMsg = perf_pubsub_benchmark::msg::PerfMessage;
 
 class PerfPublisher : public rclcpp::Node
 {
@@ -57,12 +59,9 @@ public:
     } else {
       qos.best_effort();
     }
-    publisher_ = create_publisher<std_msgs::msg::String>(topic_name_, qos);
+    publisher_ = create_publisher<PerfMsg>(topic_name_, qos);
 
-    size_t header_estimate = 40;
-    if (msg_size_ > static_cast<int>(header_estimate)) {
-      padding_ = std::string(msg_size_ - header_estimate, 'X');
-    }
+    payload_.assign(std::max(0, msg_size_), 0xAA);
 
     RCLCPP_INFO(
       get_logger(),
@@ -86,11 +85,13 @@ public:
 private:
   void publish_loop()
   {
-    // Warmup: send dummy messages to allow DDS discovery to complete
+    // Warmup: send messages with timestamp_ns=0 to allow DDS discovery
     auto warmup_end = Clock::now() + std::chrono::duration<double>(warmup_sec_);
     while (rclcpp::ok() && !done_.load() && Clock::now() < warmup_end) {
-      auto msg = std_msgs::msg::String();
-      msg.data = "warmup";
+      PerfMsg msg;
+      msg.pub_id = pub_id_;
+      msg.seq = 0;
+      msg.timestamp_ns = 0;
       publisher_->publish(msg);
       std::this_thread::sleep_for(10ms);
     }
@@ -112,10 +113,11 @@ private:
       auto ts_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
         now.time_since_epoch()).count();
 
-      auto msg = std_msgs::msg::String();
-      msg.data = std::to_string(pub_id_) + ":" +
-        std::to_string(seq_) + ":" +
-        std::to_string(ts_ns) + ":" + padding_;
+      PerfMsg msg;
+      msg.pub_id = pub_id_;
+      msg.seq = seq_;
+      msg.timestamp_ns = ts_ns;
+      msg.data = payload_;
 
       publisher_->publish(msg);
       seq_++;
@@ -133,7 +135,6 @@ private:
     double actual_dur = std::chrono::duration<double>(actual_end - start).count();
     double rate = actual_dur > 0.0 ? static_cast<double>(seq_) / actual_dur : 0.0;
 
-    // Machine-parseable result line on stderr
     fprintf(stderr,
       "[PERF_RESULT] role=publisher topic=%s pub_id=%d total_sent=%lu "
       "duration_s=%.3f msgs_per_sec=%.1f\n",
@@ -151,10 +152,10 @@ private:
   int msg_size_;
   int pub_id_;
   double warmup_sec_;
-  std::string padding_;
+  std::vector<uint8_t> payload_;
   uint64_t seq_;
   std::atomic<bool> done_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+  rclcpp::Publisher<PerfMsg>::SharedPtr publisher_;
   std::thread publish_thread_;
 };
 

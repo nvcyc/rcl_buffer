@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""rclpy performance subscriber – same wire protocol as the C++ perf_subscriber."""
+"""rclpy performance subscriber – uses PerfMessage with uint8[] payload."""
 
 import sys
 import time
@@ -23,7 +23,7 @@ import rclpy
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
-from std_msgs.msg import String
+from perf_pubsub_benchmark.msg import PerfMessage
 
 
 class PerfSubscriberPy(Node):
@@ -55,7 +55,7 @@ class PerfSubscriberPy(Node):
         )
 
         self._subscription = self.create_subscription(
-            String, self._topic_name, self._msg_callback, qos,
+            PerfMessage, self._topic_name, self._msg_callback, qos,
         )
 
         self._check_timer = self.create_timer(0.5, self._check_timeout)
@@ -84,39 +84,31 @@ class PerfSubscriberPy(Node):
     def done(self):
         return self._done
 
-    def _msg_callback(self, msg: String):
-        if msg.data == "warmup":
-            return
+    def _msg_callback(self, msg: PerfMessage):
+        if msg.timestamp_ns == 0:
+            return  # warmup message
 
         recv_ns = time.monotonic_ns()
-        now = recv_ns / 1e9  # seconds for duration tracking
+        now = recv_ns / 1e9
         if not self._started:
             self._started = True
             self._measure_start = now
         self._last_msg_time = now
 
-        try:
-            parts = msg.data.split(":", 3)
-            if len(parts) < 4:
-                return
-            seq = int(parts[1])
-            send_ns = int(parts[2])
+        latency_ns = recv_ns - msg.timestamp_ns
+        if latency_ns >= 0:
+            if latency_ns < self._latency_min_ns:
+                self._latency_min_ns = latency_ns
+            if latency_ns > self._latency_max_ns:
+                self._latency_max_ns = latency_ns
+            self._latency_sum_ns += latency_ns
 
-            latency_ns = recv_ns - send_ns
-            if latency_ns >= 0:
-                if latency_ns < self._latency_min_ns:
-                    self._latency_min_ns = latency_ns
-                if latency_ns > self._latency_max_ns:
-                    self._latency_max_ns = latency_ns
-                self._latency_sum_ns += latency_ns
-
-            if self._first_seq is None or seq < self._first_seq:
-                self._first_seq = seq
-            if seq > self._last_seq:
-                self._last_seq = seq
-            self._received += 1
-        except (ValueError, IndexError):
-            pass
+        seq = msg.seq
+        if self._first_seq is None or seq < self._first_seq:
+            self._first_seq = seq
+        if seq > self._last_seq:
+            self._last_seq = seq
+        self._received += 1
 
     def _check_timeout(self):
         now = time.monotonic()
