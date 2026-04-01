@@ -14,36 +14,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""rclpy performance subscriber – uses PerfMessage with uint8[] payload."""
+"""rclpy performance subscriber -- uses PerfMessage with uint8[] payload."""
 
 import sys
 import time
 
+from perf_pubsub_benchmark.msg import PerfMessage
 import rclpy
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
-from perf_pubsub_benchmark.msg import PerfMessage
 
 
 class PerfSubscriberPy(Node):
 
     def __init__(self):
-        super().__init__("perf_subscriber_py")
+        super().__init__('perf_subscriber_py')
 
-        self.declare_parameter("topic_name", "perf_test")
-        self.declare_parameter("sub_id", 0)
-        self.declare_parameter("timeout_sec", 3.0)
-        self.declare_parameter("max_duration_sec", 30.0)
-        self.declare_parameter("qos_depth", 1)
-        self.declare_parameter("reliable", False)
+        self.declare_parameter('topic_name', 'perf_test')
+        self.declare_parameter('sub_id', 0)
+        self.declare_parameter('timeout_sec', 3.0)
+        self.declare_parameter('max_duration_sec', 30.0)
+        self.declare_parameter('qos_depth', 1)
+        self.declare_parameter('reliable', False)
 
-        self._topic_name = self.get_parameter("topic_name").value
-        self._sub_id = self.get_parameter("sub_id").value
-        self._timeout_sec = self.get_parameter("timeout_sec").value
-        self._max_duration_sec = self.get_parameter("max_duration_sec").value
-        qos_depth = self.get_parameter("qos_depth").value
-        reliable = self.get_parameter("reliable").value
+        self._topic_name = self.get_parameter('topic_name').value
+        self._sub_id = self.get_parameter('sub_id').value
+        self._timeout_sec = self.get_parameter('timeout_sec').value
+        self._max_duration_sec = self.get_parameter('max_duration_sec').value
+        qos_depth = self.get_parameter('qos_depth').value
+        reliable = self.get_parameter('reliable').value
 
         qos = QoSProfile(
             depth=qos_depth,
@@ -63,9 +63,11 @@ class PerfSubscriberPy(Node):
         self._received = 0
         self._first_seq = None
         self._last_seq = 0
-        self._latency_min_ns = float("inf")
+        self._latency_min_ns = float('inf')
         self._latency_max_ns = 0
         self._latency_sum_ns = 0
+        self._latencies_ns: list = []
+        self._first_latency_ns = None
         self._started = False
         self._summary_printed = False
         self._done = False
@@ -75,9 +77,10 @@ class PerfSubscriberPy(Node):
         self._last_msg_time = 0.0
 
         self.get_logger().info(
-            f"PerfSubscriberPy: topic={self._topic_name} sub_id={self._sub_id} "
-            f"timeout={self._timeout_sec:.1f}s max_duration={self._max_duration_sec:.1f}s "
-            f"qos={'reliable' if reliable else 'best_effort'}"
+            f'PerfSubscriberPy: topic={self._topic_name} sub_id={self._sub_id} '
+            f'timeout={self._timeout_sec:.1f}s '
+            f'max_duration={self._max_duration_sec:.1f}s '
+            f'qos={"reliable" if reliable else "best_effort"}'
         )
 
     @property
@@ -86,7 +89,7 @@ class PerfSubscriberPy(Node):
 
     def _msg_callback(self, msg: PerfMessage):
         if msg.timestamp_ns == 0:
-            return  # warmup message
+            return
 
         recv_ns = time.monotonic_ns()
         now = recv_ns / 1e9
@@ -97,6 +100,9 @@ class PerfSubscriberPy(Node):
 
         latency_ns = recv_ns - msg.timestamp_ns
         if latency_ns >= 0:
+            self._latencies_ns.append(latency_ns)
+            if self._first_latency_ns is None:
+                self._first_latency_ns = latency_ns
             if latency_ns < self._latency_min_ns:
                 self._latency_min_ns = latency_ns
             if latency_ns > self._latency_max_ns:
@@ -131,10 +137,11 @@ class PerfSubscriberPy(Node):
 
         if not self._started or self._received == 0 or self._first_seq is None:
             print(
-                f"[PERF_RESULT] role=subscriber topic={self._topic_name} "
-                f"sub_id={self._sub_id} total_received=0 total_expected=0 "
-                f"dropped=0 drop_rate_pct=0.00 duration_s=0.000 msgs_per_sec=0.0 "
-                f"latency_min_us=0.0 latency_mean_us=0.0 latency_max_us=0.0",
+                f'[PERF_RESULT] role=subscriber topic={self._topic_name} '
+                f'sub_id={self._sub_id} total_received=0 total_expected=0 '
+                f'dropped=0 drop_rate_pct=0.00 duration_s=0.000 msgs_per_sec=0.0 '
+                f'latency_min_us=0.0 latency_mean_us=0.0 latency_median_us=0.0 '
+                f'latency_max_us=0.0 first_latency_us=0.0 max_is_first=false',
                 file=sys.stderr, flush=True,
             )
             return
@@ -153,15 +160,36 @@ class PerfSubscriberPy(Node):
             if self._received > 0 else 0.0
         )
 
+        lat_median_us = 0.0
+        if self._latencies_ns:
+            s = sorted(self._latencies_ns)
+            n = len(s)
+            if n % 2 == 1:
+                lat_median_us = s[n // 2] / 1000.0
+            else:
+                lat_median_us = (s[n // 2 - 1] + s[n // 2]) / 2000.0
+
+        first_lat_us = (
+            self._first_latency_ns / 1000.0
+            if self._first_latency_ns is not None else 0.0
+        )
+        max_is_first = (
+            self._first_latency_ns is not None
+            and self._first_latency_ns == self._latency_max_ns
+        )
+
         print(
-            f"[PERF_RESULT] role=subscriber topic={self._topic_name} "
-            f"sub_id={self._sub_id} total_received={self._received} "
-            f"total_expected={expected} dropped={dropped} "
-            f"drop_rate_pct={drop_rate:.2f} "
-            f"duration_s={dur:.3f} msgs_per_sec={rate:.1f} "
-            f"latency_min_us={lat_min_us:.1f} "
-            f"latency_mean_us={lat_mean_us:.1f} "
-            f"latency_max_us={lat_max_us:.1f}",
+            f'[PERF_RESULT] role=subscriber topic={self._topic_name} '
+            f'sub_id={self._sub_id} total_received={self._received} '
+            f'total_expected={expected} dropped={dropped} '
+            f'drop_rate_pct={drop_rate:.2f} '
+            f'duration_s={dur:.3f} msgs_per_sec={rate:.1f} '
+            f'latency_min_us={lat_min_us:.1f} '
+            f'latency_mean_us={lat_mean_us:.1f} '
+            f'latency_median_us={lat_median_us:.1f} '
+            f'latency_max_us={lat_max_us:.1f} '
+            f'first_latency_us={first_lat_us:.1f} '
+            f'max_is_first={"true" if max_is_first else "false"}',
             file=sys.stderr, flush=True,
         )
 
@@ -186,5 +214,5 @@ def main(args=None):
         rclpy.try_shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

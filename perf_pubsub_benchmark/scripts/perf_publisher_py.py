@@ -14,41 +14,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""rclpy performance publisher – uses PerfMessage with uint8[] payload."""
+"""rclpy performance publisher -- uses PerfMessage with uint8[] payload."""
 
 import sys
 import threading
 import time
 
+from perf_pubsub_benchmark.msg import PerfMessage
 import rclpy
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
-from perf_pubsub_benchmark.msg import PerfMessage
 
 
 class PerfPublisherPy(Node):
 
     def __init__(self):
-        super().__init__("perf_publisher_py")
+        super().__init__('perf_publisher_py')
 
-        self.declare_parameter("topic_name", "perf_test")
-        self.declare_parameter("rate_hz", 5000)
-        self.declare_parameter("duration_sec", 10.0)
-        self.declare_parameter("msg_size", 256)
-        self.declare_parameter("pub_id", 0)
-        self.declare_parameter("warmup_sec", 2.0)
-        self.declare_parameter("qos_depth", 1)
-        self.declare_parameter("reliable", False)
+        self.declare_parameter('topic_name', 'perf_test')
+        self.declare_parameter('rate_hz', 5000)
+        self.declare_parameter('duration_sec', 10.0)
+        self.declare_parameter('msg_size', 256)
+        self.declare_parameter('pub_id', 0)
+        self.declare_parameter('warmup_sec', 2.0)
+        self.declare_parameter('qos_depth', 1)
+        self.declare_parameter('reliable', False)
 
-        self._topic_name = self.get_parameter("topic_name").value
-        self._rate_hz = self.get_parameter("rate_hz").value
-        self._duration_sec = self.get_parameter("duration_sec").value
-        self._msg_size = self.get_parameter("msg_size").value
-        self._pub_id = self.get_parameter("pub_id").value
-        self._warmup_sec = self.get_parameter("warmup_sec").value
-        qos_depth = self.get_parameter("qos_depth").value
-        reliable = self.get_parameter("reliable").value
+        self._topic_name = self.get_parameter('topic_name').value
+        self._rate_hz = self.get_parameter('rate_hz').value
+        self._duration_sec = self.get_parameter('duration_sec').value
+        self._msg_size = self.get_parameter('msg_size').value
+        self._pub_id = self.get_parameter('pub_id').value
+        self._warmup_sec = self.get_parameter('warmup_sec').value
+        qos_depth = self.get_parameter('qos_depth').value
+        reliable = self.get_parameter('reliable').value
 
         qos = QoSProfile(
             depth=qos_depth,
@@ -63,10 +63,10 @@ class PerfPublisherPy(Node):
         self._payload = bytes(b'\xAA' * max(0, self._msg_size))
 
         self.get_logger().info(
-            f"PerfPublisherPy: topic={self._topic_name} rate={self._rate_hz}Hz "
-            f"duration={self._duration_sec:.1f}s size={self._msg_size} "
-            f"pub_id={self._pub_id} warmup={self._warmup_sec:.1f}s "
-            f"qos={'reliable' if reliable else 'best_effort'}"
+            f'PerfPublisherPy: topic={self._topic_name} rate={self._rate_hz}Hz '
+            f'duration={self._duration_sec:.1f}s size={self._msg_size} '
+            f'pub_id={self._pub_id} warmup={self._warmup_sec:.1f}s '
+            f'qos={"reliable" if reliable else "best_effort"}'
         )
 
         self._done = False
@@ -78,7 +78,6 @@ class PerfPublisherPy(Node):
         return self._done
 
     def _publish_loop(self):
-        # Warmup phase: timestamp_ns=0 signals warmup
         warmup_end = time.monotonic() + self._warmup_sec
         while rclpy.ok() and not self._done and time.monotonic() < warmup_end:
             msg = PerfMessage()
@@ -118,9 +117,9 @@ class PerfPublisherPy(Node):
         rate = seq / actual_dur if actual_dur > 0 else 0.0
 
         print(
-            f"[PERF_RESULT] role=publisher topic={self._topic_name} "
-            f"pub_id={self._pub_id} total_sent={seq} "
-            f"duration_s={actual_dur:.3f} msgs_per_sec={rate:.1f}",
+            f'[PERF_RESULT] role=publisher topic={self._topic_name} '
+            f'pub_id={self._pub_id} total_sent={seq} '
+            f'duration_s={actual_dur:.3f} msgs_per_sec={rate:.1f}',
             file=sys.stderr, flush=True,
         )
 
@@ -143,5 +142,5 @@ def main(args=None):
         rclpy.try_shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "perf_pubsub_benchmark/msg/perf_message.hpp"
@@ -39,6 +40,7 @@ public:
     latency_min_ns_(INT64_MAX),
     latency_max_ns_(0),
     latency_sum_ns_(0),
+    first_latency_ns_(-1),
     started_(false),
     summary_printed_(false),
     done_(false)
@@ -108,6 +110,10 @@ private:
       now.time_since_epoch()).count();
     int64_t latency_ns = recv_ns - msg->timestamp_ns;
     if (latency_ns >= 0) {
+      latencies_ns_.push_back(latency_ns);
+      if (first_latency_ns_ < 0) {
+        first_latency_ns_ = latency_ns;
+      }
       latency_min_ns_ = std::min(latency_min_ns_, latency_ns);
       latency_max_ns_ = std::max(latency_max_ns_, latency_ns);
       latency_sum_ns_ += latency_ns;
@@ -156,7 +162,8 @@ private:
         "[PERF_RESULT] role=subscriber topic=%s sub_id=%d total_received=0 "
         "total_expected=0 dropped=0 drop_rate_pct=0.00 "
         "duration_s=0.000 msgs_per_sec=0.0 "
-        "latency_min_us=0.0 latency_mean_us=0.0 latency_max_us=0.0\n",
+        "latency_min_us=0.0 latency_mean_us=0.0 latency_median_us=0.0 "
+        "latency_max_us=0.0 first_latency_us=0.0 max_is_first=false\n",
         topic_name_.c_str(), sub_id_);
       fflush(stderr);
       return;
@@ -171,20 +178,40 @@ private:
 
     double lat_min_us = received_ > 0 ? latency_min_ns_ / 1000.0 : 0.0;
     double lat_max_us = received_ > 0 ? latency_max_ns_ / 1000.0 : 0.0;
-    double lat_mean_us = received_ > 0
-      ? (static_cast<double>(latency_sum_ns_) / received_) / 1000.0 : 0.0;
+    double lat_mean_us = received_ > 0 ?
+      (static_cast<double>(latency_sum_ns_) / received_) / 1000.0 : 0.0;
+
+    double lat_median_us = 0.0;
+    if (!latencies_ns_.empty()) {
+      auto tmp = latencies_ns_;
+      size_t n = tmp.size();
+      std::nth_element(tmp.begin(), tmp.begin() + n / 2, tmp.end());
+      if (n % 2 == 1) {
+        lat_median_us = tmp[n / 2] / 1000.0;
+      } else {
+        auto mid = tmp[n / 2];
+        std::nth_element(tmp.begin(), tmp.begin() + n / 2 - 1, tmp.end());
+        lat_median_us = (tmp[n / 2 - 1] + mid) / 2000.0;
+      }
+    }
+
+    double first_lat_us = first_latency_ns_ >= 0 ? first_latency_ns_ / 1000.0 : 0.0;
+    bool max_is_first = first_latency_ns_ >= 0 && first_latency_ns_ == latency_max_ns_;
 
     fprintf(stderr,
       "[PERF_RESULT] role=subscriber topic=%s sub_id=%d total_received=%lu "
       "total_expected=%lu dropped=%lu drop_rate_pct=%.2f "
       "duration_s=%.3f msgs_per_sec=%.1f "
-      "latency_min_us=%.1f latency_mean_us=%.1f latency_max_us=%.1f\n",
+      "latency_min_us=%.1f latency_mean_us=%.1f latency_median_us=%.1f "
+      "latency_max_us=%.1f first_latency_us=%.1f max_is_first=%s\n",
       topic_name_.c_str(), sub_id_,
       static_cast<unsigned long>(received_),
       static_cast<unsigned long>(expected),
       static_cast<unsigned long>(dropped),
       drop_rate, dur, rate,
-      lat_min_us, lat_mean_us, lat_max_us);
+      lat_min_us, lat_mean_us, lat_median_us,
+      lat_max_us, first_lat_us,
+      max_is_first ? "true" : "false");
     fflush(stderr);
   }
 
@@ -199,6 +226,8 @@ private:
   int64_t latency_min_ns_;
   int64_t latency_max_ns_;
   int64_t latency_sum_ns_;
+  int64_t first_latency_ns_;
+  std::vector<int64_t> latencies_ns_;
   bool started_;
   bool summary_printed_;
   std::atomic<bool> done_;

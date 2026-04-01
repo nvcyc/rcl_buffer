@@ -101,9 +101,9 @@ private:
       return;
     }
 
-    auto interval_ns = rate_hz_ > 0
-      ? std::chrono::nanoseconds(1000000000L / rate_hz_)
-      : std::chrono::nanoseconds(0);
+    auto interval_ns = rate_hz_ > 0 ?
+      std::chrono::nanoseconds(1000000000L / rate_hz_) :
+      std::chrono::nanoseconds(0);
 
     auto start = Clock::now();
     auto end_time = start + std::chrono::duration<double>(duration_sec_);
