@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -73,7 +74,7 @@ class ImageSubscriber : public rclcpp::Node
 {
 public:
   ImageSubscriber()
-  : Node("image_subscriber"), received_count_(0), last_correct_(true)
+  : Node("image_subscriber"), received_count_(0), last_correct_(true), duplicate_detected_(false)
   {
     subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
       "test_image", 10,
@@ -84,6 +85,7 @@ public:
 
   size_t get_received_count() const {return received_count_;}
   bool is_last_correct() const {return last_correct_;}
+  bool has_duplicates() const {return duplicate_detected_;}
 
   const sensor_msgs::msg::Image::SharedPtr get_last_message() const
   {
@@ -152,6 +154,18 @@ private:
       return;
     }
 
+    // Test 5: Duplicate detection — data[0] == (pub_count % 256) is unique per message
+    uint8_t first_byte = msg->data[0];
+    if (seen_first_bytes_.count(first_byte) > 0) {
+      RCLCPP_ERROR(this->get_logger(),
+                   "Duplicate message detected! data[0]=%u was already received",
+                   first_byte);
+      last_correct_ = false;
+      duplicate_detected_ = true;
+      return;
+    }
+    seen_first_bytes_.insert(first_byte);
+
     RCLCPP_INFO(this->get_logger(),
                 "Received valid image #%zu (backend: %s)",
                 received_count_,
@@ -162,6 +176,8 @@ private:
   sensor_msgs::msg::Image::SharedPtr last_msg_;
   size_t received_count_;
   bool last_correct_;
+  bool duplicate_detected_;
+  std::unordered_set<uint8_t> seen_first_bytes_;
 };
 
 int main(int argc, char ** argv)
@@ -222,6 +238,11 @@ int main(int argc, char ** argv)
 
     if (!subscriber->is_last_correct()) {
       std::cerr << "ERROR: Last message validation failed!\n";
+      success = false;
+    }
+
+    if (subscriber->has_duplicates()) {
+      std::cerr << "ERROR: Duplicate messages detected!\n";
       success = false;
     }
 

@@ -81,10 +81,23 @@ if(demo_buffer_FOUND)
     ${sensor_msgs_TARGETS}
   )
 
+  # Intra-process pub+sub combined with inter-process subscriber support
+  add_executable(test_intra_inter_image_pubsub
+    src/test_intra_inter_image_pubsub.cpp
+  )
+  target_link_libraries(test_intra_inter_image_pubsub
+    demo_buffer::demo_buffer
+    rclcpp::rclcpp
+    rosidl_runtime_cpp::rosidl_runtime_cpp
+    ${sensor_msgs_TARGETS}
+    ${std_msgs_TARGETS}
+  )
+
   install(TARGETS
     demo_backend_image_publisher_node
     demo_backend_image_subscriber_node
     test_demo_buffer_image_pubsub
+    test_intra_inter_image_pubsub
     DESTINATION lib/${PROJECT_NAME}
   )
 
@@ -121,10 +134,68 @@ if(BUILD_TESTING)
       TARGET test_1pub_1sub_cpu_to_cpu_zenoh
       TIMEOUT 30
     )
+    add_launch_test(test/test_1pub_1sub_demo_to_demo_zenoh.py
+      TARGET test_1pub_1sub_demo_to_demo_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_2sub_cpu_to_cpu_zenoh.py
+      TARGET test_1pub_2sub_cpu_to_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_2sub_demo_to_demo_zenoh.py
+      TARGET test_1pub_2sub_demo_to_demo_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_2pub_2sub_cpu_to_cpu_zenoh.py
+      TARGET test_2pub_2sub_cpu_to_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_2pub_2sub_demo_to_demo_zenoh.py
+      TARGET test_2pub_2sub_demo_to_demo_zenoh
+      TIMEOUT 30
+    )
+
+    # Zenoh tests: acceptable_buffer_backends option tests
+    add_launch_test(test/test_1pub_1sub_demo_to_demo_sub_any_zenoh.py
+      TARGET test_1pub_1sub_demo_to_demo_sub_any_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_demo_sub_demo_zenoh.py
+      TARGET test_1pub_1sub_demo_to_demo_sub_demo_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_empty_zenoh.py
+      TARGET test_1pub_1sub_cpu_to_cpu_sub_empty_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_cpu_zenoh.py
+      TARGET test_1pub_1sub_cpu_to_cpu_sub_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_cpu_to_cpu_sub_default_zenoh.py
+      TARGET test_1pub_1sub_cpu_to_cpu_sub_default_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_empty_zenoh.py
+      TARGET test_1pub_1sub_demo_to_cpu_sub_empty_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_cpu_zenoh.py
+      TARGET test_1pub_1sub_demo_to_cpu_sub_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_1pub_1sub_demo_to_cpu_sub_default_zenoh.py
+      TARGET test_1pub_1sub_demo_to_cpu_sub_default_zenoh
+      TIMEOUT 30
+    )
 
     # Zenoh tests: rclpy publisher/subscriber: 1 pub to 1 sub tests
     add_launch_test(test/test_rclpy_1pub_1sub_cpu_to_cpu_zenoh.py
       TARGET test_rclpy_1pub_1sub_cpu_to_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclpy_1pub_1sub_cpu_to_cpu_explicit_zenoh.py
+      TARGET test_rclpy_1pub_1sub_cpu_to_cpu_explicit_zenoh
       TIMEOUT 30
     )
     add_launch_test(test/test_rclpy_1pub_1sub_demo_to_demo_zenoh.py
@@ -149,6 +220,10 @@ if(BUILD_TESTING)
       TARGET test_rclpy_pub_demo_rclcpp_sub_demo_zenoh
       TIMEOUT 30
     )
+    add_launch_test(test/test_rclcpp_pub_cpu_rclpy_sub_cpu_explicit_zenoh.py
+      TARGET test_rclcpp_pub_cpu_rclpy_sub_cpu_explicit_zenoh
+      TIMEOUT 30
+    )
 
     # Zenoh tests: Cross-language 1 pub to 2 subs (rclcpp + rclpy) tests
     add_launch_test(test/test_rclcpp_pub_cpu_rclcpp_sub_rclpy_sub_cpu_zenoh.py
@@ -157,6 +232,14 @@ if(BUILD_TESTING)
     )
     add_launch_test(test/test_rclpy_pub_cpu_rclcpp_sub_rclpy_sub_cpu_zenoh.py
       TARGET test_rclpy_pub_cpu_rclcpp_sub_rclpy_sub_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclcpp_pub_demo_rclcpp_sub_rclpy_sub_demo_zenoh.py
+      TARGET test_rclcpp_pub_demo_rclcpp_sub_rclpy_sub_demo_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclpy_pub_demo_rclcpp_sub_rclpy_sub_demo_zenoh.py
+      TARGET test_rclpy_pub_demo_rclcpp_sub_rclpy_sub_demo_zenoh
       TIMEOUT 30
     )
 
@@ -176,7 +259,35 @@ if(BUILD_TESTING)
       TIMEOUT 30
     )
 
-    # Service / action route tests (rclpy)
+    # Zenoh tests: Same-process (pub + sub in one process)
+    add_launch_test(test/test_same_process_cpu_to_cpu_zenoh.py
+      TARGET test_same_process_cpu_to_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_same_process_demo_to_demo_zenoh.py
+      TARGET test_same_process_demo_to_demo_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclpy_same_process_cpu_to_cpu_zenoh.py
+      TARGET test_rclpy_same_process_cpu_to_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_rclpy_same_process_demo_to_demo_zenoh.py
+      TARGET test_rclpy_same_process_demo_to_demo_zenoh
+      TIMEOUT 30
+    )
+
+    # Service / action route tests (rclpy) - Zenoh
+    add_launch_test(test/test_rclpy_service_cpu_zenoh.py
+      TARGET test_rclpy_service_cpu_zenoh
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclpy_action_zenoh.py
+      TARGET test_rclpy_action_zenoh
+      TIMEOUT 45
+    )
+
+    # Service / action route tests (rclpy) - FastRTPS
     add_launch_test(test/test_rclpy_service_cpu_fastrtps.py
       TARGET test_rclpy_service_cpu_fastrtps
       TIMEOUT 45
@@ -385,6 +496,42 @@ if(BUILD_TESTING)
     )
     add_launch_test(test/test_rclpy_same_process_demo_to_demo_fastrtps.py
       TARGET test_rclpy_same_process_demo_to_demo_fastrtps
+      TIMEOUT 45
+    )
+
+    # Zenoh tests: Intra-process + inter-process (1 pub → 1 intra sub + 1 inter sub)
+    add_launch_test(test/test_intra_cpu_inter_cpu_zenoh.py
+      TARGET test_intra_cpu_inter_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_intra_demo_inter_demo_zenoh.py
+      TARGET test_intra_demo_inter_demo_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_intra_demo_inter_cpu_zenoh.py
+      TARGET test_intra_demo_inter_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_intra_cpu_inter_demo_zenoh.py
+      TARGET test_intra_cpu_inter_demo_zenoh
+      TIMEOUT 30
+    )
+
+    # FastRTPS tests: Intra-process + inter-process (1 pub → 1 intra sub + 1 inter sub)
+    add_launch_test(test/test_intra_cpu_inter_cpu_fastrtps.py
+      TARGET test_intra_cpu_inter_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_intra_demo_inter_demo_fastrtps.py
+      TARGET test_intra_demo_inter_demo_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_intra_demo_inter_cpu_fastrtps.py
+      TARGET test_intra_demo_inter_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_intra_cpu_inter_demo_fastrtps.py
+      TARGET test_intra_cpu_inter_demo_fastrtps
       TIMEOUT 45
     )
   endif()

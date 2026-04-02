@@ -50,6 +50,7 @@ class RclpyImageSubscriber(Node):
 
         self.received_count = 0
         self.validation_passed = True
+        self.seen_first_bytes = set()
 
         # Create subscriber with configurable acceptable_buffer_backends
         sub_kwargs = {}
@@ -157,6 +158,17 @@ class RclpyImageSubscriber(Node):
                     else:
                         self.get_logger().warn('Data pattern verification: FAILED')
                         valid = False
+
+                    # Duplicate detection: data[0] == (pub_count % 256)
+                    # is unique per message for tests sending < 256 messages
+                    first_byte = data_bytes[0]
+                    if first_byte in self.seen_first_bytes:
+                        self.get_logger().error(
+                            f'Image #{self.received_count}: duplicate message '
+                            f'detected! data[0]={first_byte} was already received')
+                        valid = False
+                    else:
+                        self.seen_first_bytes.add(first_byte)
 
             except Exception as e:
                 self.get_logger().error(

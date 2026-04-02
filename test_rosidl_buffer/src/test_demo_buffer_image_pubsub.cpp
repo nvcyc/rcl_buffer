@@ -17,6 +17,7 @@
 
 #include <chrono>
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -80,7 +81,8 @@ class DemoImageSubscriber : public rclcpp::Node
 {
 public:
   DemoImageSubscriber()
-  : Node("demo_image_subscriber"), received_count_(0), last_correct_(true)
+  : Node("demo_image_subscriber"), received_count_(0), last_correct_(true),
+    duplicate_detected_(false)
   {
     subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
       "test_image", 10,
@@ -90,6 +92,7 @@ public:
 
   size_t get_received_count() const {return received_count_;}
   bool is_last_correct() const {return last_correct_;}
+  bool has_duplicates() const {return duplicate_detected_;}
 
 private:
   void image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
@@ -108,6 +111,17 @@ private:
       return;
     }
 
+    // Duplicate detection — data[0] == (pub_count % 256) is unique per message
+    uint8_t first_byte = msg->data[0];
+    if (seen_first_bytes_.count(first_byte) > 0) {
+      RCLCPP_ERROR(this->get_logger(),
+        "Duplicate message detected! data[0]=%u was already received", first_byte);
+      last_correct_ = false;
+      duplicate_detected_ = true;
+      return;
+    }
+    seen_first_bytes_.insert(first_byte);
+
     RCLCPP_INFO(
       this->get_logger(), "Received image #%zu (backend: %s, size: %zu)",
       received_count_, msg->data.get_backend_type().c_str(), msg->data.size());
@@ -116,6 +130,8 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_;
   size_t received_count_;
   bool last_correct_;
+  bool duplicate_detected_;
+  std::unordered_set<uint8_t> seen_first_bytes_;
 };
 
 int main(int argc, char ** argv)
@@ -147,12 +163,14 @@ int main(int argc, char ** argv)
     }
   }
 
-  bool success = subscriber->get_received_count() >= 3 && subscriber->is_last_correct();
+  bool success = subscriber->get_received_count() >= 3 &&
+    subscriber->is_last_correct() && !subscriber->has_duplicates();
 
   std::cout << "\nTest Results:\n";
   std::cout << "  Published: " << publisher->get_publish_count() << " images\n";
   std::cout << "  Received:  " << subscriber->get_received_count() << " images\n";
   std::cout << "  Valid: " << (subscriber->is_last_correct() ? "YES" : "NO") << "\n";
+  std::cout << "  Duplicates: " << (subscriber->has_duplicates() ? "YES (FAIL)" : "NONE") << "\n";
 
   std::cout << "\nCalling rclcpp::shutdown()...\n" << std::flush;
   rclcpp::shutdown();

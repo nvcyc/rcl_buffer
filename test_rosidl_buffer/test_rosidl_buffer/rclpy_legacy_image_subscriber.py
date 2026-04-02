@@ -57,6 +57,7 @@ class RclpyLegacyImageSubscriber(Node):
 
         self.received_count = 0
         self.validation_passed = True
+        self.seen_first_bytes = set()
 
         self.subscription = self.create_subscription(
             Image, topic_name, self.image_callback, 10)
@@ -179,6 +180,18 @@ class RclpyLegacyImageSubscriber(Node):
                         f'byte[{i - 1}]={data_bytes[i - 1]}')
                     valid = False
                     break
+
+        # 11. Duplicate detection: data[0] == (pub_count % 256) is unique per
+        # message for tests sending < 256 messages
+        if valid and len(data) > 0:
+            first_byte = data[0]
+            if first_byte in self.seen_first_bytes:
+                self.get_logger().error(
+                    f'Image #{self.received_count}: duplicate message '
+                    f'detected! data[0]={first_byte} was already received')
+                valid = False
+            else:
+                self.seen_first_bytes.add(first_byte)
 
         if not valid:
             self.validation_passed = False

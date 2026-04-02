@@ -80,6 +80,7 @@ class SubNode(Node):
         self.expected_backend = expected_backend
         self.received_count = 0
         self.validation_passed = True
+        self.seen_first_bytes = set()
 
         sub_kwargs = {}
         if expected_backend == 'demo':
@@ -138,6 +139,16 @@ class SubNode(Node):
                             f'#{self.received_count}: data pattern mismatch at byte {i}')
                         valid = False
                         break
+
+                # Duplicate detection: data[0] == (pub_count % 256)
+                first_byte = data_bytes[0]
+                if first_byte in self.seen_first_bytes:
+                    self.get_logger().error(
+                        f'#{self.received_count}: duplicate message detected! '
+                        f'data[0]={first_byte} was already received')
+                    valid = False
+                else:
+                    self.seen_first_bytes.add(first_byte)
             except Exception as e:
                 self.get_logger().error(f'#{self.received_count}: validation error: {e}')
                 valid = False

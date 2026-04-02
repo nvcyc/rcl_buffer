@@ -18,6 +18,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -190,6 +191,19 @@ private:
         } else {
           RCLCPP_WARN(this->get_logger(), "Data pattern verification: FAILED");
         }
+
+        // Duplicate detection: data[0] == (pub_count % 256) is unique per message
+        // for tests sending fewer than 256 messages
+        uint8_t first_byte = cpu_data[0];
+        if (seen_first_bytes_.count(first_byte) > 0) {
+          RCLCPP_ERROR(
+            this->get_logger(),
+            "Duplicate message detected! data[0]=%u was already received",
+            first_byte);
+          msg_valid = false;
+        } else {
+          seen_first_bytes_.insert(first_byte);
+        }
       }
     } catch (const std::exception & e) {
       RCLCPP_ERROR(this->get_logger(), "Exception during data validation: %s", e.what());
@@ -229,6 +243,7 @@ private:
   std::vector<std::string> expected_backends_;
   uint32_t received_count_;
   bool validation_passed_;
+  std::unordered_set<uint8_t> seen_first_bytes_;
 };
 
 int main(int argc, char ** argv)
