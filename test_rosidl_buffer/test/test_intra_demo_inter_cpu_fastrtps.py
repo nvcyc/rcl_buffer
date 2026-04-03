@@ -105,12 +105,12 @@ class TestIntraDemoInterCpuFastRTPS(unittest.TestCase):
     def _spin_until(self, timeout_sec=15.0):
         start = time.time()
         while (
-            (self.intra_count < 1 or self.inter_count < 1
+            (self.intra_count < 20 or self.inter_count < 20
              or self.intra_validation is None or self.inter_validation is None)
             and time.time() - start < timeout_sec
         ):
             rclpy.spin_once(self.node, timeout_sec=0.1)
-        return self.intra_count >= 1 and self.inter_count >= 1
+        return self.intra_count >= 20 and self.inter_count >= 20
 
     def test_intra_and_inter_receive(self):
         success = self._spin_until(timeout_sec=15.0)

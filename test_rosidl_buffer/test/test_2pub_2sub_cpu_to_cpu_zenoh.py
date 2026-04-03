@@ -48,7 +48,7 @@ def generate_test_description():
             'topic_name': 'topic1_image',
             'publish_rate_ms': 200,
             'count_topic_prefix': 'topic1',
-            'max_publish_count': 5,
+            'max_publish_count': 50,
         }],
     )
 
@@ -89,7 +89,7 @@ def generate_test_description():
             'topic_name': 'topic2_image',
             'publish_rate_ms': 200,
             'count_topic_prefix': 'topic2',
-            'max_publish_count': 5,
+            'max_publish_count': 50,
         }],
     )
 
@@ -225,7 +225,7 @@ class TestCpuToCpu2Pub2Sub(unittest.TestCase):
         return (any(v is None for v in self.topic1_validations.values()) or
                 any(v is None for v in self.topic2_validations.values()))
 
-    def _spin_until(self, target_count=1, timeout_sec=20.0):
+    def _spin_until(self, target_count=20, timeout_sec=20.0):
         start = time.time()
         while (
             (self._get_min_count() < target_count
@@ -237,17 +237,17 @@ class TestCpuToCpu2Pub2Sub(unittest.TestCase):
 
     def test_cpu_to_cpu_2pub_2sub_messages_delivered(self):
         """Test 2 CPU publishers to 2 CPU subscribers each."""
-        success = self._spin_until(target_count=1, timeout_sec=20.0)
+        success = self._spin_until(target_count=20, timeout_sec=20.0)
 
         min_count = self._get_min_count()
         self.assertTrue(
             success,
-            f'Failed to receive at least 1 message on all subscribers. '
+            f'Failed to receive at least 20 messages on all subscribers. '
             f'Min: {min_count}, topic1: {self.topic1_sub_counts}, '
             f'topic2: {self.topic2_sub_counts}')
         self.assertGreaterEqual(
-            min_count, 1,
-            f'All subscribers should have received at least 1 message. '
+            min_count, 20,
+            f'All subscribers should have received at least 20 messages. '
             f'topic1: {self.topic1_sub_counts}, '
             f'topic2: {self.topic2_sub_counts}')
         self.assertTrue(

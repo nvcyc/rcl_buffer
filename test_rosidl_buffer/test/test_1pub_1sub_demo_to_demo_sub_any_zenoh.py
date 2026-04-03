@@ -45,7 +45,7 @@ def generate_test_description():
             'backend_mode': 'demo',
             'topic_name': 'test_image',
             'publish_rate_ms': 200,
-            'max_publish_count': 5,
+            'max_publish_count': 50,
         }],
     )
 
@@ -118,7 +118,7 @@ class TestDemoDemoSubAny(unittest.TestCase):
     def _validation_cb(self, msg):
         self.validation_passed = msg.data
 
-    def _spin_until(self, target_count=1, timeout_sec=15.0):
+    def _spin_until(self, target_count=20, timeout_sec=15.0):
         start = time.time()
         while (
             (self.subscriber_count < target_count
@@ -130,7 +130,7 @@ class TestDemoDemoSubAny(unittest.TestCase):
 
     def test_demo_to_demo_sub_any(self):
         """Demo pub to sub with 'any' should receive demo-backend data."""
-        success = self._spin_until(target_count=1, timeout_sec=15.0)
+        success = self._spin_until(target_count=20, timeout_sec=15.0)
         self.assertTrue(success, f'Received: {self.subscriber_count}')
         self.assertTrue(self.validation_passed, 'Image validation failed')
 

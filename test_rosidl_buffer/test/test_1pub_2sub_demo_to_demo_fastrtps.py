@@ -132,7 +132,7 @@ class TestDemoToDemo2SubFastRTPS(unittest.TestCase):
     def _any_validation_pending(self):
         return any(v is None for v in self.validation_results.values())
 
-    def _spin_until(self, target_count=1, timeout_sec=15.0):
+    def _spin_until(self, target_count=20, timeout_sec=15.0):
         start = time.time()
         while (
             (self._get_min_sub_count() < target_count
@@ -144,16 +144,16 @@ class TestDemoToDemo2SubFastRTPS(unittest.TestCase):
 
     def test_demo_to_demo_2sub_messages_delivered(self):
         """Test Demo backend publisher to 2 Demo backend subscribers over FastRTPS."""
-        success = self._spin_until(target_count=1, timeout_sec=15.0)
+        success = self._spin_until(target_count=20, timeout_sec=15.0)
 
         min_count = self._get_min_sub_count()
         self.assertTrue(
             success,
-            f'Failed to receive at least 1 message on all subscribers. '
+            f'Failed to receive at least 20 messages on all subscribers. '
             f'Min received: {min_count}')
         self.assertGreaterEqual(
-            min_count, 1,
-            f'All subscribers should have received at least 1 message. '
+            min_count, 20,
+            f'All subscribers should have received at least 20 messages. '
             f'Counts: {self.subscriber_counts}')
         self.assertTrue(
             self._all_validations_passed(),

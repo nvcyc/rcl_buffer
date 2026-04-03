@@ -103,7 +103,7 @@ class TestRclcppPubCpuRclpySubCpuExplicitFastRTPS(unittest.TestCase):
     def _validation_cb(self, msg):
         self.validation_passed = msg.data
 
-    def _spin_until(self, target_count=1, timeout_sec=15.0):
+    def _spin_until(self, target_count=20, timeout_sec=15.0):
         start = time.time()
         while self.subscriber_count < target_count and time.time() - start < timeout_sec:
             rclpy.spin_once(self.node, timeout_sec=0.1)
@@ -111,15 +111,15 @@ class TestRclcppPubCpuRclpySubCpuExplicitFastRTPS(unittest.TestCase):
 
     def test_rclcpp_pub_cpu_rclpy_sub_cpu_explicit_messages_delivered(self):
         """Test rclcpp CPU pub to rclpy CPU sub with explicit acceptable_buffer_backends."""
-        success = self._spin_until(target_count=1, timeout_sec=15.0)
+        success = self._spin_until(target_count=20, timeout_sec=15.0)
 
         self.assertTrue(
             success,
-            f'Failed to receive at least 1 message. '
+            f'Failed to receive at least 20 messages. '
             f'Received: {self.subscriber_count}')
         self.assertGreaterEqual(
-            self.subscriber_count, 1,
-            f'Subscriber should have received at least 1 message. '
+            self.subscriber_count, 20,
+            f'Subscriber should have received at least 20 messages. '
             f'Received: {self.subscriber_count}')
         self.assertTrue(self.validation_passed, 'Image validation failed')
 

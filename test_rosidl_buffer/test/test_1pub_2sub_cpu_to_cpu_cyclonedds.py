@@ -41,7 +41,7 @@ def generate_test_description():
             'backend_mode': 'cpu',
             'topic_name': 'test_image',
             'publish_rate_ms': 200,
-            'max_publish_count': 5,
+            'max_publish_count': 50,
         }],
     )
 
@@ -129,7 +129,7 @@ class TestCpuToCpu2SubCycloneDDS(unittest.TestCase):
     def _any_validation_pending(self):
         return any(v is None for v in self.validation_results.values())
 
-    def _spin_until(self, target_count=1, timeout_sec=15.0):
+    def _spin_until(self, target_count=20, timeout_sec=15.0):
         start = time.time()
         while (
             (self._get_min_sub_count() < target_count
@@ -141,16 +141,16 @@ class TestCpuToCpu2SubCycloneDDS(unittest.TestCase):
 
     def test_cpu_to_cpu_2sub_messages_delivered(self):
         """Test CPU backend publisher to 2 CPU backend subscribers over CycloneDDS."""
-        success = self._spin_until(target_count=1, timeout_sec=15.0)
+        success = self._spin_until(target_count=20, timeout_sec=15.0)
 
         min_count = self._get_min_sub_count()
         self.assertTrue(
             success,
-            f'Failed to receive at least 1 message on all subscribers. '
+            f'Failed to receive at least 20 messages on all subscribers. '
             f'Min received: {min_count}')
         self.assertGreaterEqual(
-            min_count, 1,
-            f'All subscribers should have received at least 1 message. '
+            min_count, 20,
+            f'All subscribers should have received at least 20 messages. '
             f'Counts: {self.subscriber_counts}')
         self.assertTrue(
             self._all_validations_passed(),

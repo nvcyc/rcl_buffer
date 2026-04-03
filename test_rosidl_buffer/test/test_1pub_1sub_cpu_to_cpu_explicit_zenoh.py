@@ -46,7 +46,7 @@ def generate_test_description():
             'backend_mode': 'cpu',
             'topic_name': 'test_image',
             'publish_rate_ms': 200,
-            'max_publish_count': 5,
+            'max_publish_count': 50,
         }],
     )
 
@@ -125,7 +125,7 @@ class TestCpuToCpuExplicit(unittest.TestCase):
     def _validation_cb(self, msg):
         self.validation_passed = msg.data
 
-    def _spin_until(self, target_count=1, timeout_sec=15.0):
+    def _spin_until(self, target_count=20, timeout_sec=15.0):
         start = time.time()
         while (
             (self.subscriber_count < target_count
@@ -137,15 +137,15 @@ class TestCpuToCpuExplicit(unittest.TestCase):
 
     def test_cpu_to_cpu_explicit_messages_delivered(self):
         """Test CPU pub to CPU sub with explicit acceptable_buffer_backends='cpu'."""
-        success = self._spin_until(target_count=1, timeout_sec=15.0)
+        success = self._spin_until(target_count=20, timeout_sec=15.0)
 
         self.assertTrue(
             success,
-            f'Failed to receive at least 1 message. '
+            f'Failed to receive at least 20 messages. '
             f'Received: {self.subscriber_count}')
         self.assertGreaterEqual(
-            self.subscriber_count, 1,
-            f'Subscriber should have received at least 1 message. '
+            self.subscriber_count, 20,
+            f'Subscriber should have received at least 20 messages. '
             f'Received: {self.subscriber_count}')
         self.assertTrue(self.validation_passed, 'Image validation failed')
 
