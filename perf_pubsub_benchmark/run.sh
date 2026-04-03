@@ -1,0 +1,1 @@
+pixi run bash -c "source install/setup.bash && python3 install/perf_pubsub_benchmark/lib/perf_pubsub_benchmark/run_benchmark.py"

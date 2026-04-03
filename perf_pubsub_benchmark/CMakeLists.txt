@@ -23,14 +23,21 @@ add_executable(perf_subscriber
 )
 target_link_libraries(perf_subscriber rclcpp::rclcpp)
 
+add_executable(perf_intraprocess
+  src/perf_intraprocess.cpp
+)
+target_link_libraries(perf_intraprocess rclcpp::rclcpp)
+
 rosidl_get_typesupport_target(cpp_typesupport_target
   "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 target_link_libraries(perf_publisher "${cpp_typesupport_target}")
 target_link_libraries(perf_subscriber "${cpp_typesupport_target}")
+target_link_libraries(perf_intraprocess "${cpp_typesupport_target}")
 
 install(TARGETS
   perf_publisher
   perf_subscriber
+  perf_intraprocess
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -18,7 +18,8 @@
 ROS2 Pub/Sub Performance Benchmark Runner.
 
 Tests every combination of topology (1:1, 1:N, multi-topic) and client
-library pairing (rclcpp/rclpy) to measure throughput, drop rate, and latency.
+library pairing (rclcpp/rclpy, plus intra-process) to measure throughput,
+drop rate, and latency.
 
 Requires:
     pixi shell                          # activate pixi environment
@@ -57,6 +58,9 @@ EXECUTABLES: Dict[str, Dict[str, str]] = {
     'py': {
         'pub': 'perf_publisher_py.py',
         'sub': 'perf_subscriber_py.py',
+    },
+    "intra": {
+        "combined": "perf_intraprocess",
     },
 }
 
@@ -116,10 +120,11 @@ TOPOLOGIES = [
 # ---------------------------------------------------------------------------
 
 CLIENT_COMBOS = [
-    {'name': 'cpp_cpp', 'label': 'cpp->cpp', 'pub': 'cpp', 'sub': 'cpp'},
-    {'name': 'py_py',   'label': 'py->py',   'pub': 'py',  'sub': 'py'},
-    {'name': 'cpp_py',  'label': 'cpp->py',  'pub': 'cpp', 'sub': 'py'},
-    {'name': 'py_cpp',  'label': 'py->cpp',  'pub': 'py',  'sub': 'cpp'},
+    {"name": "cpp_cpp",   "label": "cpp->cpp",   "pub": "cpp", "sub": "cpp"},
+    {"name": "py_py",     "label": "py->py",     "pub": "py",  "sub": "py"},
+    {"name": "cpp_py",    "label": "cpp->py",    "pub": "cpp", "sub": "py"},
+    {"name": "py_cpp",    "label": "py->cpp",    "pub": "py",  "sub": "cpp"},
+    {"name": "intra_cpp", "label": "intra-cpp",  "mode": "intra"},
 ]
 
 # ---------------------------------------------------------------------------
@@ -253,6 +258,18 @@ def resolve_exe(ws: Path, lang: str, role: str) -> List[str]:
     return [str(exe)]
 
 
+def resolve_intra_exe(ws: Path) -> str:
+    """Return the path to the intra-process benchmark binary."""
+    name = EXECUTABLES["intra"]["combined"]
+    exe = ws / "install" / PKG / "lib" / PKG / name
+    if not exe.exists():
+        raise FileNotFoundError(
+            f"Executable not found: {exe}\n"
+            f"  Did you build the package?  pixi run build {PKG}"
+        )
+    return str(exe)
+
+
 # ---------------------------------------------------------------------------
 # Output parsing
 # ---------------------------------------------------------------------------
@@ -323,6 +340,86 @@ def _terminate(proc: subprocess.Popen, timeout: float = 5.0):
         proc.wait()
 
 
+def _run_intra_scenario(
+    ws: Path,
+    topology: dict,
+    combo: dict,
+    rate_hz: int,
+    duration_sec: float,
+    msg_size: int,
+    domain_id: int,
+    reliable: bool,
+    qos_depth: int = 1,
+) -> ScenarioResult:
+    """Run an intra-process scenario (pub+sub in same process with IPC)."""
+    env = os.environ.copy()
+    env["ROS_DOMAIN_ID"] = str(domain_id)
+
+    intra_exe = resolve_intra_exe(ws)
+
+    processes: List[subprocess.Popen] = []
+    result = ScenarioResult(
+        topology_name=topology["name"],
+        topology_desc=topology["description"],
+        client_combo=combo["name"],
+        client_label=combo["label"],
+    )
+
+    pub_id_counter = 0
+    sub_id_counter = 0
+
+    for topic_cfg in topology["topics"]:
+        topic = topic_cfg["topic"]
+        num_pubs = topic_cfg["num_pubs"]
+        num_subs = topic_cfg["num_subs"]
+
+        cmd = [
+            intra_exe,
+            "--topic", topic,
+            "--num-pubs", str(num_pubs),
+            "--num-subs", str(num_subs),
+            "--rate-hz", str(rate_hz),
+            "--duration", str(duration_sec),
+            "--msg-size", str(msg_size),
+            "--warmup", "2.0",
+            "--qos-depth", str(qos_depth),
+            "--timeout", "3.0",
+            "--max-duration", str(duration_sec + 10.0),
+            "--pub-id-start", str(pub_id_counter),
+            "--sub-id-start", str(sub_id_counter),
+        ]
+        if reliable:
+            cmd.append("--reliable")
+
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
+        )
+        processes.append(proc)
+
+        pub_id_counter += num_pubs
+        sub_id_counter += num_subs
+
+    deadline = time.time() + duration_sec + 20.0
+    for proc in processes:
+        remaining = max(1.0, deadline - time.time())
+        try:
+            proc.wait(timeout=remaining)
+        except subprocess.TimeoutExpired:
+            _terminate(proc)
+
+    parts: List[str] = []
+    for proc in processes:
+        stdout_bytes = proc.stdout.read() if proc.stdout else b""
+        stderr_bytes = proc.stderr.read() if proc.stderr else b""
+        parts.append(stdout_bytes.decode("utf-8", errors="replace"))
+        parts.append(stderr_bytes.decode("utf-8", errors="replace"))
+
+    pub_results, sub_results = parse_all_output("\n".join(parts))
+    result.pub_results = pub_results
+    result.sub_results = sub_results
+    return result
+
+
 def run_scenario(
     ws: Path,
     topology: dict,
@@ -334,6 +431,12 @@ def run_scenario(
     reliable: bool,
     qos_depth: int = 1,
 ) -> ScenarioResult:
+    if combo.get("mode") == "intra":
+        return _run_intra_scenario(
+            ws, topology, combo, rate_hz, duration_sec,
+            msg_size, domain_id, reliable, qos_depth,
+        )
+
     env = os.environ.copy()
     env['ROS_DOMAIN_ID'] = str(domain_id)
 
@@ -569,9 +672,9 @@ def main():
         help='Run only these topologies (default: all)',
     )
     parser.add_argument(
-        '--clients', type=str, nargs='*', default=None,
-        help='Run only these client combos (default: all). '
-             'Use all or list names like cpp_cpp py_py cpp_py py_cpp',
+        "--clients", type=str, nargs="*", default=None,
+        help="Run only these client combos (default: all). "
+             "Use 'all' or list names like cpp_cpp py_py cpp_py py_cpp intra_cpp",
     )
     parser.add_argument(
         '--workspace', type=str, default=None,
