@@ -14,8 +14,8 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_buffer_backend REQUIRED)
 find_package(rosidl_runtime_cpp REQUIRED)
+find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(rosidl_buffer_backend_registry REQUIRED)
-find_package(rosidl_typesupport_fastrtps_cpp REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(demo_buffer REQUIRED)
 find_package(demo_buffer_backend_msgs REQUIRED)
@@ -33,12 +33,16 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE DEMO_BUFFER_BACKEND_BUILDING_DLL)
 
+# Link against the msgs package's aggregated typesupport targets. The plugin
+# only calls the generic rosidl_typesupport_cpp::get_message_type_support_handle<T>()
+# and returns the aggregate handle; the consuming RMW resolves the concrete
+# per-typesupport-library handle at runtime, so this stays RMW-agnostic.
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  demo_buffer_backend_msgs::demo_buffer_backend_msgs__rosidl_typesupport_fastrtps_cpp
+  ${demo_buffer_backend_msgs_TARGETS}
   rosidl_buffer_backend::rosidl_buffer_backend
   rosidl_runtime_cpp::rosidl_runtime_cpp
+  rosidl_typesupport_cpp::rosidl_typesupport_cpp
   rosidl_buffer_backend_registry::rosidl_buffer_backend_registry
-  rosidl_typesupport_fastrtps_cpp::rosidl_typesupport_fastrtps_cpp
   pluginlib::pluginlib
   demo_buffer::demo_buffer
   rcutils::rcutils
@@ -74,8 +78,8 @@ ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(
   rosidl_buffer_backend
   rosidl_runtime_cpp
+  rosidl_typesupport_cpp
   rosidl_buffer_backend_registry
-  rosidl_typesupport_fastrtps_cpp
   pluginlib
   demo_buffer
   demo_buffer_backend_msgs
