@@ -33,9 +33,28 @@ target_link_libraries(test_cpu_buffer_image_pubsub
   ${sensor_msgs_TARGETS}
 )
 
+# Reproducer for the template-argument-deduction failure reported by
+# downstream OpenCV users (e.g. bag2_to_image). By default this target
+# compiles cleanly and asserts the expected failure via static_assert.
+# Configure with -DTEST_BUFFER_REPRO_COMPILE_ERROR=ON to force the
+# reproducer to emit the actual compile error.
+option(TEST_BUFFER_REPRO_COMPILE_ERROR
+  "Enable the failing line in test_buffer_template_deduction to surface \
+the exact downstream compile error." OFF)
+add_executable(test_buffer_template_deduction src/test_buffer_template_deduction.cpp)
+target_link_libraries(test_buffer_template_deduction
+  rosidl_runtime_cpp::rosidl_runtime_cpp
+  ${sensor_msgs_TARGETS}
+)
+if(TEST_BUFFER_REPRO_COMPILE_ERROR)
+  target_compile_definitions(test_buffer_template_deduction
+    PRIVATE REPRO_COMPILE_ERROR=1)
+endif()
+
 install(TARGETS
   test_cpu_buffer_image
   test_cpu_buffer_image_pubsub
+  test_buffer_template_deduction
   DESTINATION lib/${PROJECT_NAME}
 )
 
