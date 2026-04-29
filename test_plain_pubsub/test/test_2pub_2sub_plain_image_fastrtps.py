@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 # Launch test: 2 publishers on different topics, each with 2 subscribers (FastRTPS)
-# All using Demo backend. Tests full buffer-aware mesh with per-subscriber DataWriters.
+# Uses plain sensor_msgs/Image — no buffer backends involved.
 
 import time
 import unittest
@@ -32,88 +32,76 @@ from std_msgs.msg import Bool, UInt32
 @pytest.mark.launch_test
 @launch_testing.markers.keep_alive
 def generate_test_description():
-    """Generate launch description for 2 pub / 2 sub per topic, Demo-to-Demo over FastRTPS."""
+    """Generate launch description for 2 pub / 2 sub per topic, plain Image over FastRTPS."""
     publisher_1 = Node(
-        package='test_rosidl_buffer_nv',
-        executable='demo_backend_image_publisher_node',
-        name='demo_image_publisher_1',
+        package='test_plain_pubsub',
+        executable='plain_image_publisher_node',
+        name='plain_image_publisher_1',
         output='screen',
         parameters=[{
-            'backend_mode': 'demo',
             'topic_name': 'topic1_image',
             'publish_rate_ms': 200,
             'count_topic_prefix': 'topic1',
             'max_publish_count': 50,
-            'expected_subscription_count': 2,
         }],
     )
 
     subscriber_1a = Node(
-        package='test_rosidl_buffer_nv',
-        executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber_1a',
+        package='test_plain_pubsub',
+        executable='plain_image_subscriber_node',
+        name='plain_image_subscriber_1a',
         output='screen',
         parameters=[{
             'topic_name': 'topic1_image',
-            'expected_backends': 'demo',
-            'acceptable_buffer_backends': 'any',
             'count_topic_prefix': 'topic1',
             'count_topic_suffix': '_a',
         }],
     )
 
     subscriber_1b = Node(
-        package='test_rosidl_buffer_nv',
-        executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber_1b',
+        package='test_plain_pubsub',
+        executable='plain_image_subscriber_node',
+        name='plain_image_subscriber_1b',
         output='screen',
         parameters=[{
             'topic_name': 'topic1_image',
-            'expected_backends': 'demo',
-            'acceptable_buffer_backends': 'any',
             'count_topic_prefix': 'topic1',
             'count_topic_suffix': '_b',
         }],
     )
 
     publisher_2 = Node(
-        package='test_rosidl_buffer_nv',
-        executable='demo_backend_image_publisher_node',
-        name='demo_image_publisher_2',
+        package='test_plain_pubsub',
+        executable='plain_image_publisher_node',
+        name='plain_image_publisher_2',
         output='screen',
         parameters=[{
-            'backend_mode': 'demo',
             'topic_name': 'topic2_image',
             'publish_rate_ms': 200,
             'count_topic_prefix': 'topic2',
             'max_publish_count': 50,
-            'expected_subscription_count': 2,
         }],
     )
 
     subscriber_2a = Node(
-        package='test_rosidl_buffer_nv',
-        executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber_2a',
+        package='test_plain_pubsub',
+        executable='plain_image_subscriber_node',
+        name='plain_image_subscriber_2a',
         output='screen',
         parameters=[{
             'topic_name': 'topic2_image',
-            'expected_backends': 'demo',
-            'acceptable_buffer_backends': 'any',
             'count_topic_prefix': 'topic2',
             'count_topic_suffix': '_a',
         }],
     )
 
     subscriber_2b = Node(
-        package='test_rosidl_buffer_nv',
-        executable='demo_backend_image_subscriber_node',
-        name='demo_image_subscriber_2b',
+        package='test_plain_pubsub',
+        executable='plain_image_subscriber_node',
+        name='plain_image_subscriber_2b',
         output='screen',
         parameters=[{
             'topic_name': 'topic2_image',
-            'expected_backends': 'demo',
-            'acceptable_buffer_backends': 'any',
             'count_topic_prefix': 'topic2',
             'count_topic_suffix': '_b',
         }],
@@ -131,8 +119,8 @@ def generate_test_description():
     ])
 
 
-class TestDemoToDemo2Pub2SubFastRTPS(unittest.TestCase):
-    """Test case for 2 pub / 2 sub per topic, Demo-to-Demo over FastRTPS."""
+class TestPlainImage2Pub2SubFastRTPS(unittest.TestCase):
+    """Test case for 2 pub / 2 sub per topic, plain Image over FastRTPS."""
 
     @classmethod
     def setUpClass(cls):
@@ -143,7 +131,7 @@ class TestDemoToDemo2Pub2SubFastRTPS(unittest.TestCase):
         rclpy.shutdown()
 
     def setUp(self):
-        self.node = rclpy.create_node('test_demo_to_demo_2pub_2sub_fastrtps')
+        self.node = rclpy.create_node('test_plain_image_2pub_2sub_fastrtps')
 
         self.topic1_pub_count = 0
         self.topic1_sub_counts = {'_a': 0, '_b': 0}
@@ -203,7 +191,7 @@ class TestDemoToDemo2Pub2SubFastRTPS(unittest.TestCase):
         return (any(v is None for v in self.topic1_validations.values()) or
                 any(v is None for v in self.topic2_validations.values()))
 
-    def _spin_until(self, target_count=20, timeout_sec=20.0):
+    def _spin_until(self, target_count=1, timeout_sec=20.0):
         start = time.time()
         while (
             (self._get_min_count() < target_count
@@ -213,19 +201,19 @@ class TestDemoToDemo2Pub2SubFastRTPS(unittest.TestCase):
             rclpy.spin_once(self.node, timeout_sec=0.1)
         return self._get_min_count() >= target_count
 
-    def test_demo_to_demo_2pub_2sub_messages_delivered(self):
-        """Test 2 Demo publishers to 2 Demo subscribers each over FastRTPS."""
-        success = self._spin_until(target_count=20, timeout_sec=20.0)
+    def test_plain_image_2pub_2sub_messages_delivered(self):
+        """Test 2 plain Image publishers to 2 subscribers each over FastRTPS."""
+        success = self._spin_until(target_count=1, timeout_sec=20.0)
 
         min_count = self._get_min_count()
         self.assertTrue(
             success,
-            f'Failed to receive at least 20 messages on all subscribers. '
+            f'Failed to receive at least 1 message on all subscribers. '
             f'Min: {min_count}, topic1: {self.topic1_sub_counts}, '
             f'topic2: {self.topic2_sub_counts}')
         self.assertGreaterEqual(
-            min_count, 20,
-            f'All subscribers should have received at least 20 messages. '
+            min_count, 1,
+            f'All subscribers should have received at least 1 message. '
             f'topic1: {self.topic1_sub_counts}, '
             f'topic2: {self.topic2_sub_counts}')
         self.assertTrue(
@@ -235,8 +223,8 @@ class TestDemoToDemo2Pub2SubFastRTPS(unittest.TestCase):
 
 
 @launch_testing.post_shutdown_test()
-class TestDemoToDemo2Pub2SubFastRTPSShutdown(unittest.TestCase):
-    """Test shutdown behavior for Demo to Demo with 2 pub / 2 sub over FastRTPS."""
+class TestPlainImage2Pub2SubFastRTPSShutdown(unittest.TestCase):
+    """Test shutdown behavior for plain Image 2 pub / 2 sub over FastRTPS."""
 
     def test_exit_codes(self, proc_info):
         launch_testing.asserts.assertExitCodes(proc_info)

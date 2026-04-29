@@ -12,6 +12,8 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rosidl_runtime_cpp REQUIRED)
+find_package(test_msgs REQUIRED)
+find_package(isaac_ros_tensor_list_interfaces REQUIRED)
 
 # Optional dependencies for test backend nodes
 find_package(rclcpp_components QUIET)
@@ -120,6 +122,109 @@ if(demo_buffer_FOUND)
     DESTINATION lib/${PROJECT_NAME}
   )
 
+  # MultiNested ("list of uint8[]") pub/sub — single-process smoke test and
+  # launch-test driver nodes.
+  #
+  # test_msgs::msg::MultiNested embeds UnboundedSequences[], each with a
+  # `uint8[] uint8_values` field that the rosidl C++ generator emits as
+  # rosidl::Buffer<uint8_t>. These targets verify nested Buffer fields
+  # round-trip and can be constructed with an explicit demo backend.
+  # test_msgs is a required dependency of this package; missing it is a
+  # build-time error.
+
+  # Single-process integration test (no launch).
+  add_executable(test_demo_buffer_multi_nested_pubsub
+    src/test_demo_buffer_multi_nested_pubsub.cpp
+  )
+  target_link_libraries(test_demo_buffer_multi_nested_pubsub
+    demo_buffer::demo_buffer
+    rclcpp::rclcpp
+    rosidl_runtime_cpp::rosidl_runtime_cpp
+    ${test_msgs_TARGETS}
+  )
+
+  # Configurable publisher node for launch tests
+  # (cpu/demo selectable via parameter).
+  add_executable(multi_nested_publisher_node
+    src/multi_nested_publisher_node.cpp
+  )
+  target_link_libraries(multi_nested_publisher_node
+    demo_buffer::demo_buffer
+    rclcpp::rclcpp
+    rosidl_runtime_cpp::rosidl_runtime_cpp
+    ${std_msgs_TARGETS}
+    ${test_msgs_TARGETS}
+  )
+
+  # Subscriber node for launch tests (content + backend validation,
+  # emits counters/validation/backend_report topics for launch_testing).
+  add_executable(multi_nested_subscriber_node
+    src/multi_nested_subscriber_node.cpp
+  )
+  target_link_libraries(multi_nested_subscriber_node
+    rclcpp::rclcpp
+    rosidl_runtime_cpp::rosidl_runtime_cpp
+    ${std_msgs_TARGETS}
+    ${test_msgs_TARGETS}
+  )
+
+  install(TARGETS
+    test_demo_buffer_multi_nested_pubsub
+    multi_nested_publisher_node
+    multi_nested_subscriber_node
+    DESTINATION lib/${PROJECT_NAME}
+  )
+
+  # TensorList ("list of uint8[]") pub/sub — same shape of test as MultiNested
+  # but driven by a real-world Isaac ROS message type
+  # (isaac_ros_tensor_list_interfaces::msg::TensorList). Each Tensor in the
+  # outer list has a `uint8[] data` field that the rosidl C++ generator
+  # emits as rosidl::Buffer<uint8_t>. isaac_ros_tensor_list_interfaces is a
+  # required dependency of this package; missing it is a build-time error.
+
+  # Single-process integration test (no launch).
+  add_executable(test_demo_buffer_tensor_list_pubsub
+    src/test_demo_buffer_tensor_list_pubsub.cpp
+  )
+  target_link_libraries(test_demo_buffer_tensor_list_pubsub
+    demo_buffer::demo_buffer
+    rclcpp::rclcpp
+    rosidl_runtime_cpp::rosidl_runtime_cpp
+    ${isaac_ros_tensor_list_interfaces_TARGETS}
+  )
+
+  # Configurable publisher node for launch tests
+  # (cpu/demo selectable via parameter).
+  add_executable(tensor_list_publisher_node
+    src/tensor_list_publisher_node.cpp
+  )
+  target_link_libraries(tensor_list_publisher_node
+    demo_buffer::demo_buffer
+    rclcpp::rclcpp
+    rosidl_runtime_cpp::rosidl_runtime_cpp
+    ${std_msgs_TARGETS}
+    ${isaac_ros_tensor_list_interfaces_TARGETS}
+  )
+
+  # Subscriber node for launch tests (content + backend validation,
+  # emits counters/validation/backend_report topics for launch_testing).
+  add_executable(tensor_list_subscriber_node
+    src/tensor_list_subscriber_node.cpp
+  )
+  target_link_libraries(tensor_list_subscriber_node
+    rclcpp::rclcpp
+    rosidl_runtime_cpp::rosidl_runtime_cpp
+    ${std_msgs_TARGETS}
+    ${isaac_ros_tensor_list_interfaces_TARGETS}
+  )
+
+  install(TARGETS
+    test_demo_buffer_tensor_list_pubsub
+    tensor_list_publisher_node
+    tensor_list_subscriber_node
+    DESTINATION lib/${PROJECT_NAME}
+  )
+
 else()
   message(STATUS "demo_buffer NOT found - skipping demo backend nodes")
 endif()
@@ -171,6 +276,40 @@ if(BUILD_TESTING)
     )
     add_launch_test(test/test_2pub_2sub_demo_to_demo_zenoh.py
       TARGET test_2pub_2sub_demo_to_demo_zenoh
+      TIMEOUT 30
+    )
+
+    # Zenoh tests: MultiNested ("list of uint8[]") — nested Buffer fields.
+    # Exercise both CPU and demo construction paths; subscriber validates
+    # content round-trip and reports the observed backend of the nested
+    # uint8_values fields.
+    add_launch_test(test/test_multi_nested_demo_to_demo_zenoh.py
+      TARGET test_multi_nested_demo_to_demo_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_multi_nested_cpu_to_cpu_zenoh.py
+      TARGET test_multi_nested_cpu_to_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_multi_nested_demo_to_cpu_zenoh.py
+      TARGET test_multi_nested_demo_to_cpu_zenoh
+      TIMEOUT 30
+    )
+
+    # Zenoh tests: TensorList ("list of uint8[]") — nested Buffer fields in a
+    # real-world Isaac ROS message type. Same matrix of demo/cpu construction
+    # paths as MultiNested above; subscriber validates content round-trip and
+    # reports the observed backend of nested tensor.data buffers.
+    add_launch_test(test/test_tensor_list_demo_to_demo_zenoh.py
+      TARGET test_tensor_list_demo_to_demo_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_tensor_list_cpu_to_cpu_zenoh.py
+      TARGET test_tensor_list_cpu_to_cpu_zenoh
+      TIMEOUT 30
+    )
+    add_launch_test(test/test_tensor_list_demo_to_cpu_zenoh.py
+      TARGET test_tensor_list_demo_to_cpu_zenoh
       TIMEOUT 30
     )
 
@@ -398,6 +537,47 @@ if(BUILD_TESTING)
     add_launch_test(test/test_2pub_2sub_demo_to_demo_fastrtps.py
       TARGET test_2pub_2sub_demo_to_demo_fastrtps
       TIMEOUT 60
+    )
+
+    # FastRTPS tests: MultiNested ("list of uint8[]") — nested Buffer fields.
+    add_launch_test(test/test_multi_nested_demo_to_demo_fastrtps.py
+      TARGET test_multi_nested_demo_to_demo_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_multi_nested_cpu_to_cpu_fastrtps.py
+      TARGET test_multi_nested_cpu_to_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_multi_nested_demo_to_cpu_fastrtps.py
+      TARGET test_multi_nested_demo_to_cpu_fastrtps
+      TIMEOUT 45
+    )
+
+    # FastRTPS tests: TensorList ("list of uint8[]") — nested Buffer fields in
+    # a real-world Isaac ROS message type.
+    add_launch_test(test/test_tensor_list_demo_to_demo_fastrtps.py
+      TARGET test_tensor_list_demo_to_demo_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_tensor_list_cpu_to_cpu_fastrtps.py
+      TARGET test_tensor_list_cpu_to_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_tensor_list_demo_to_cpu_fastrtps.py
+      TARGET test_tensor_list_demo_to_cpu_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclcpp_pub_tensor_list_demo_rclpy_sub_demo_fastrtps.py
+      TARGET test_rclcpp_pub_tensor_list_demo_rclpy_sub_demo_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclpy_pub_tensor_list_demo_rclcpp_sub_demo_fastrtps.py
+      TARGET test_rclpy_pub_tensor_list_demo_rclcpp_sub_demo_fastrtps
+      TIMEOUT 45
+    )
+    add_launch_test(test/test_rclpy_pub_tensor_list_demo_rclpy_sub_demo_fastrtps.py
+      TARGET test_rclpy_pub_tensor_list_demo_rclpy_sub_demo_fastrtps
+      TIMEOUT 45
     )
 
     # FastRTPS tests: acceptable_buffer_backends option tests

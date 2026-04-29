@@ -13,9 +13,9 @@
 # limitations under the License.
 #
 # Launch test: 1 pub (demo) → 1 intra-process sub (cpu) + 1 inter-process sub (demo) (FastRTPS)
-# Mixed scenario: intra-process sub uses default CPU-only (rejects demo backend),
-# inter-process sub accepts any backend (gets cpu via serialization anyway).
-# Both subscribers should receive valid CPU data.
+# Mixed scenario: intra-process sub uses default CPU-only (rejects demo
+# backend, materialises a CPU copy), inter-process sub accepts any backend
+# and now receives the demo backend end-to-end via the descriptor wire format.
 
 import time
 import unittest
@@ -55,7 +55,7 @@ def generate_test_description():
         output='screen',
         parameters=[{
             'topic_name': 'test_image',
-            'expected_backends': 'demo,cpu',
+            'expected_backends': 'demo',
             'acceptable_buffer_backends': 'any',
             'count_topic_suffix': '',
         }],

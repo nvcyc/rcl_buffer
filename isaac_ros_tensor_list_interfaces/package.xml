@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>isaac_ros_tensor_list_interfaces</name>
+  <version>4.3.0</version>
+  <description>Interfaces for Isaac ROS tensor list (mirror of upstream NVIDIA Isaac ROS Common message definitions, used here to exercise rosidl::Buffer backends with a real-world nested message containing a uint8[] data buffer).</description>
+
+  <maintainer email="cyc@nvidia.com">CY Chen</maintainer>
+
+  <license>Apache License 2.0</license>
+
+  <author>Isaac ROS Maintainers</author>
+  <author>Hemal Shah</author>
+  <author>Ethan Yu</author>
+
+  <url type="website">https://developer.nvidia.com/isaac-ros-gems/</url>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+
+  <depend>std_msgs</depend>
+
+  <exec_depend>rosidl_default_runtime</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

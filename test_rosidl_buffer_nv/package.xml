@@ -21,10 +21,11 @@
 
   <depend>demo_buffer</depend>
   <depend>demo_buffer_backend</depend>
+  <depend>test_msgs</depend>
+  <depend>isaac_ros_tensor_list_interfaces</depend>
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>rcl_interfaces</exec_depend>
-  <exec_depend>test_msgs</exec_depend>
   <exec_depend>rosidl_buffer_py</exec_depend>
   <exec_depend>demo_buffer_py</exec_depend>
 
@@ -37,7 +38,6 @@
   <test_depend>launch_testing_ros</test_depend>
   <test_depend>launch_testing_ament_cmake</test_depend>
   <test_depend>rcl_interfaces</test_depend>
-  <test_depend>test_msgs</test_depend>
   <test_depend>rmw_zenoh_cpp</test_depend>
   <test_depend>rmw_fastrtps_cpp</test_depend>
 

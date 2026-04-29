@@ -13,9 +13,10 @@
 # limitations under the License.
 #
 # Launch test: 1 pub (demo) → 1 intra-process sub (demo) + 1 inter-process sub (demo) (FastRTPS)
-# Both subscribers accept any buffer backend.  The intra-process subscriber may
-# receive the original demo buffer; the inter-process subscriber receives
-# serialized data (cpu fallback).
+# Both subscribers accept any buffer backend.  The intra-process subscriber
+# receives the original demo buffer (zero-copy via shared_ptr).  The inter-
+# process subscriber serialises through the buffer-aware FastRTPS path and the
+# demo backend is preserved end-to-end via the descriptor wire format.
 
 import time
 import unittest
@@ -44,7 +45,7 @@ def generate_test_description():
             'topic_name': 'test_image',
             'publish_rate_ms': 200,
             'max_publish_count': 50,
-            'intra_expected_backends': 'demo,cpu',
+            'intra_expected_backends': 'demo',
             'intra_acceptable_buffer_backends': 'any',
         }],
     )
@@ -56,7 +57,7 @@ def generate_test_description():
         output='screen',
         parameters=[{
             'topic_name': 'test_image',
-            'expected_backends': 'demo,cpu',
+            'expected_backends': 'demo',
             'acceptable_buffer_backends': 'any',
             'count_topic_suffix': '',
         }],

@@ -40,6 +40,7 @@ public:
     this->declare_parameter<int>("publish_rate_ms", 500);
     this->declare_parameter<std::string>("count_topic_prefix", "");
     this->declare_parameter<int>("max_publish_count", 0);  // 0 = unlimited
+    this->declare_parameter<int>("expected_subscription_count", 0);
 
     // Get parameters
     backend_mode_ = this->get_parameter("backend_mode").as_string();
@@ -47,6 +48,10 @@ public:
     int publish_rate_ms = this->get_parameter("publish_rate_ms").as_int();
     std::string count_prefix = this->get_parameter("count_topic_prefix").as_string();
     max_publish_count_ = static_cast<size_t>(this->get_parameter("max_publish_count").as_int());
+    const int expected_subscription_count =
+      this->get_parameter("expected_subscription_count").as_int();
+    expected_subscription_count_ = expected_subscription_count > 0 ?
+      static_cast<size_t>(expected_subscription_count) : 0u;
 
     // Validate backend mode
     if (backend_mode_ != "cpu" && backend_mode_ != "demo") {
@@ -67,9 +72,11 @@ public:
       std::bind(&DemoBackendImagePublisher::timer_callback, this));
 
     RCLCPP_INFO(this->get_logger(),
-      "Demo backend image publisher started (backend_mode: %s, topic: %s, max_count: %zu)",
+      "Demo backend image publisher started "
+      "(backend_mode: %s, topic: %s, max_count: %zu, expected_subscriptions: %zu)",
       backend_mode_.c_str(), topic_name.c_str(),
-      max_publish_count_ == 0 ? SIZE_MAX : max_publish_count_);
+      max_publish_count_ == 0 ? SIZE_MAX : max_publish_count_,
+      expected_subscription_count_);
   }
 
 private:
@@ -77,6 +84,9 @@ private:
   {
     // Stop publishing if max count reached (0 = unlimited)
     if (max_publish_count_ > 0 && count_ >= max_publish_count_) {
+      return;
+    }
+    if (publisher_->get_subscription_count() < expected_subscription_count_) {
       return;
     }
 
@@ -133,6 +143,7 @@ private:
   std::string backend_mode_;
   size_t count_;
   size_t max_publish_count_;
+  size_t expected_subscription_count_;
 };
 
 int main(int argc, char ** argv)

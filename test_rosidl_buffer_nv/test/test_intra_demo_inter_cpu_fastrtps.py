@@ -43,7 +43,7 @@ def generate_test_description():
             'topic_name': 'test_image',
             'publish_rate_ms': 200,
             'max_publish_count': 50,
-            'intra_expected_backends': 'demo,cpu',
+            'intra_expected_backends': 'demo',
             'intra_acceptable_buffer_backends': 'any',
         }],
     )
