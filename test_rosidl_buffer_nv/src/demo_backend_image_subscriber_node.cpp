@@ -15,6 +15,7 @@
 // Demo backend image subscriber node for demonstrating buffer backend plugin system
 // Supports configurable topic and expected backend type via parameters
 
+#include <algorithm>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -41,6 +42,8 @@ public:
     this->declare_parameter<std::string>("count_topic_suffix", "");
     this->declare_parameter<std::string>("count_topic_prefix", "");
     this->declare_parameter<std::string>("acceptable_buffer_backends", "__default__");
+    this->declare_parameter<int>("log_every_n", 1);
+    this->declare_parameter<bool>("detect_duplicates", true);
 
     // Get parameters
     std::string topic_name = this->get_parameter("topic_name").as_string();
@@ -49,6 +52,8 @@ public:
     std::string count_prefix = this->get_parameter("count_topic_prefix").as_string();
     std::string acceptable_backends =
       this->get_parameter("acceptable_buffer_backends").as_string();
+    log_every_n_ = this->get_parameter("log_every_n").as_int();
+    detect_duplicates_ = this->get_parameter("detect_duplicates").as_bool();
 
     // Parse expected backends
     parse_expected_backends(expected_backends_str_);
@@ -109,7 +114,11 @@ private:
     received_count_++;
     bool msg_valid = true;
 
-    RCLCPP_INFO(this->get_logger(), "Received image #%u", received_count_);
+    const bool should_log =
+      log_every_n_ > 0 && received_count_ % static_cast<uint32_t>(log_every_n_) == 0;
+    if (should_log) {
+      RCLCPP_INFO(this->get_logger(), "Received image #%u", received_count_);
+    }
 
     // Validate dimensions
     if (msg->width != 8 || msg->height != 8) {
@@ -147,18 +156,20 @@ private:
     }
 
     // Log backend type
-    if (backend_type == "demo") {
-      RCLCPP_INFO(
-        this->get_logger(),
-        "Received message using 'demo' backend - zero-copy path!");
-    } else if (backend_type == "cpu") {
-      RCLCPP_INFO(
-        this->get_logger(),
-        "Received message using 'cpu' backend - serialization fallback");
-    } else {
-      RCLCPP_INFO(
-        this->get_logger(),
-        "Received message using '%s' backend", backend_type.c_str());
+    if (should_log) {
+      if (backend_type == "demo") {
+        RCLCPP_INFO(
+          this->get_logger(),
+          "Received message using 'demo' backend - zero-copy path!");
+      } else if (backend_type == "cpu") {
+        RCLCPP_INFO(
+          this->get_logger(),
+          "Received message using 'cpu' backend - serialization fallback");
+      } else {
+        RCLCPP_INFO(
+          this->get_logger(),
+          "Received message using '%s' backend", backend_type.c_str());
+      }
     }
 
     // Validate data integrity
@@ -166,10 +177,12 @@ private:
       std::vector<uint8_t> cpu_data = msg->data.to_vector();
 
       if (cpu_data.size() > 0) {
-        RCLCPP_INFO(
-          this->get_logger(),
-          "Data integrity check: first byte = %u, last byte = %u, size = %zu",
-          cpu_data[0], cpu_data[cpu_data.size() - 1], cpu_data.size());
+        if (should_log) {
+          RCLCPP_INFO(
+            this->get_logger(),
+            "Data integrity check: first byte = %u, last byte = %u, size = %zu",
+            cpu_data[0], cpu_data[cpu_data.size() - 1], cpu_data.size());
+        }
 
         // Verify data pattern (values should be sequential modulo 256)
         bool pattern_valid = true;
@@ -186,23 +199,25 @@ private:
           }
         }
 
-        if (pattern_valid) {
+        if (pattern_valid && should_log) {
           RCLCPP_INFO(this->get_logger(), "Data pattern verification: PASSED");
-        } else {
+        } else if (!pattern_valid) {
           RCLCPP_WARN(this->get_logger(), "Data pattern verification: FAILED");
         }
 
         // Duplicate detection: data[0] == (pub_count % 256) is unique per message
         // for tests sending fewer than 256 messages
-        uint8_t first_byte = cpu_data[0];
-        if (seen_first_bytes_.count(first_byte) > 0) {
-          RCLCPP_ERROR(
-            this->get_logger(),
-            "Duplicate message detected! data[0]=%u was already received",
-            first_byte);
-          msg_valid = false;
-        } else {
-          seen_first_bytes_.insert(first_byte);
+        if (detect_duplicates_) {
+          uint8_t first_byte = cpu_data[0];
+          if (seen_first_bytes_.count(first_byte) > 0) {
+            RCLCPP_ERROR(
+              this->get_logger(),
+              "Duplicate message detected! data[0]=%u was already received",
+              first_byte);
+            msg_valid = false;
+          } else {
+            seen_first_bytes_.insert(first_byte);
+          }
         }
       }
     } catch (const std::exception & e) {
@@ -221,18 +236,18 @@ private:
     validation_msg.data = validation_passed_;
     validation_publisher_->publish(validation_msg);
 
-    if (msg_valid) {
+    if (!msg_valid) {
+      RCLCPP_ERROR(
+        this->get_logger(),
+        "Image #%u validation: FAILED",
+        received_count_);
+    } else if (should_log) {
       RCLCPP_INFO(
         this->get_logger(),
         "Image #%u validation: PASSED (backend: %s, size: %zu)",
         received_count_,
         backend_type.c_str(),
         msg->data.size());
-    } else {
-      RCLCPP_ERROR(
-        this->get_logger(),
-        "Image #%u validation: FAILED",
-        received_count_);
     }
   }
 
@@ -244,6 +259,8 @@ private:
   uint32_t received_count_;
   bool validation_passed_;
   std::unordered_set<uint8_t> seen_first_bytes_;
+  int log_every_n_;
+  bool detect_duplicates_;
 };
 
 int main(int argc, char ** argv)

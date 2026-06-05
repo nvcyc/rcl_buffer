@@ -41,6 +41,7 @@ public:
     this->declare_parameter<std::string>("count_topic_prefix", "");
     this->declare_parameter<int>("max_publish_count", 0);  // 0 = unlimited
     this->declare_parameter<int>("expected_subscription_count", 0);
+    this->declare_parameter<int>("log_every_n", 1);
 
     // Get parameters
     backend_mode_ = this->get_parameter("backend_mode").as_string();
@@ -52,6 +53,7 @@ public:
       this->get_parameter("expected_subscription_count").as_int();
     expected_subscription_count_ = expected_subscription_count > 0 ?
       static_cast<size_t>(expected_subscription_count) : 0u;
+    log_every_n_ = this->get_parameter("log_every_n").as_int();
 
     // Validate backend mode
     if (backend_mode_ != "cpu" && backend_mode_ != "demo") {
@@ -123,11 +125,13 @@ private:
       msg.data = host_data;
     }
 
-    RCLCPP_INFO(
-      this->get_logger(),
-      "Publishing image #%zu with %s backend (size: %zu, backend: %s)",
-      count_ + 1, backend_mode_.c_str(), msg.data.size(),
-      msg.data.get_backend_type().c_str());
+    if (log_every_n_ > 0 && (count_ + 1) % static_cast<size_t>(log_every_n_) == 0) {
+      RCLCPP_INFO(
+        this->get_logger(),
+        "Publishing image #%zu with %s backend (size: %zu, backend: %s)",
+        count_ + 1, backend_mode_.c_str(), msg.data.size(),
+        msg.data.get_backend_type().c_str());
+    }
 
     publisher_->publish(msg);
 
@@ -144,6 +148,7 @@ private:
   size_t count_;
   size_t max_publish_count_;
   size_t expected_subscription_count_;
+  int log_every_n_;
 };
 
 int main(int argc, char ** argv)

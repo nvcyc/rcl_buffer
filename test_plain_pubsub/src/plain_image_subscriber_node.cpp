@@ -31,10 +31,12 @@ public:
     this->declare_parameter<std::string>("topic_name", "plain_image");
     this->declare_parameter<std::string>("count_topic_suffix", "");
     this->declare_parameter<std::string>("count_topic_prefix", "");
+    this->declare_parameter<int>("log_every_n", 1);
 
     std::string topic_name = this->get_parameter("topic_name").as_string();
     std::string count_suffix = this->get_parameter("count_topic_suffix").as_string();
     std::string count_prefix = this->get_parameter("count_topic_prefix").as_string();
+    log_every_n_ = this->get_parameter("log_every_n").as_int();
 
     subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
       topic_name, 10,
@@ -71,10 +73,12 @@ private:
     validation_msg.data = validation_passed_;
     validation_publisher_->publish(validation_msg);
 
-    RCLCPP_INFO(this->get_logger(),
-      "Received image #%u (valid: %s)",
-      received_count_,
-      msg_valid ? "true" : "false");
+    if (log_every_n_ > 0 && received_count_ % static_cast<uint32_t>(log_every_n_) == 0) {
+      RCLCPP_INFO(this->get_logger(),
+        "Received image #%u (valid: %s)",
+        received_count_,
+        msg_valid ? "true" : "false");
+    }
   }
 
   bool validate_image(const sensor_msgs::msg::Image & msg) const
@@ -140,6 +144,7 @@ private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr validation_publisher_;
   uint32_t received_count_;
   bool validation_passed_;
+  int log_every_n_;
 };
 
 int main(int argc, char ** argv)

@@ -32,11 +32,13 @@ public:
     this->declare_parameter<int>("publish_rate_ms", 500);
     this->declare_parameter<std::string>("count_topic_prefix", "");
     this->declare_parameter<int>("max_publish_count", 0);
+    this->declare_parameter<int>("log_every_n", 1);
 
     std::string topic_name = this->get_parameter("topic_name").as_string();
     int publish_rate_ms = this->get_parameter("publish_rate_ms").as_int();
     std::string count_prefix = this->get_parameter("count_topic_prefix").as_string();
     max_publish_count_ = static_cast<size_t>(this->get_parameter("max_publish_count").as_int());
+    log_every_n_ = this->get_parameter("log_every_n").as_int();
 
     publisher_ = this->create_publisher<sensor_msgs::msg::Image>(topic_name, 10);
 
@@ -75,7 +77,9 @@ private:
       msg.data[i] = static_cast<uint8_t>((count_ + i) % 256);
     }
 
-    RCLCPP_INFO(this->get_logger(), "Publishing image #%zu", count_);
+    if (log_every_n_ > 0 && count_ % static_cast<size_t>(log_every_n_) == 0) {
+      RCLCPP_INFO(this->get_logger(), "Publishing image #%zu", count_);
+    }
     publisher_->publish(msg);
 
     auto count_msg = std_msgs::msg::UInt32();
@@ -92,6 +96,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   size_t count_;
   size_t max_publish_count_;
+  int log_every_n_;
 };
 
 int main(int argc, char ** argv)

@@ -229,6 +229,11 @@ else()
   message(STATUS "demo_buffer NOT found - skipping demo backend nodes")
 endif()
 
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
 # Install Python package for rclpy test nodes.
 # SCRIPTS_DESTINATION makes setuptools generate proper .exe wrappers on Windows
 # (extensionless shebang scripts don't work there — WinError 193).
